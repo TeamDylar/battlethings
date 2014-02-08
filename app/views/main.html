@@ -34,7 +34,7 @@
 <div class="footer">
   <p>♥ from the Yeoman team</p>
 </div> -->
- <div ng-controller="MainCtrl">
+<!--  <div ng-controller="MainCtrl">
        <li ng-repeat="player in players">
           <span class="candidate-{{player.available}}">{{player}}</span>
       </li>
@@ -43,3 +43,13 @@
     <input type="text" name="input" ng-model="text"
                           ng-pattern="word" required ng-trim="false">
     <tt>text = {{text}}</tt><br/>
+</form> -->
+
+    <div id="playersDiv">
+      <div ng-repeat="player in players"><em>{{player.player}}</em>: {{player.status}}</div>
+    </div>
+    <input type="text" ng-model="name" placeholder="Name">
+    <input type="text" ng-model="msg" ng-keydown="addMessage($event)" placeholder="Message...">
+
+    <br>
+end of file
