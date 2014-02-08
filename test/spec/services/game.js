@@ -3,7 +3,7 @@
 describe('Service: Game', function () {
 
   // load the service's module
-  beforeEach(module('ss14Team113App'));
+  beforeEach(angular.mock.module('ss14Team113App'));
 
   // instantiate service
   var Game;

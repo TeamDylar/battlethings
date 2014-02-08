@@ -3,7 +3,7 @@
 describe('Controller: GameCtrl', function () {
 
   // load the controller's module
-  beforeEach(module('ss14Team113App'));
+  beforeEach(angular.mock.module('ss14Team113App'));
 
   var GameCtrl,
     scope;

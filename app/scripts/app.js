@@ -4,7 +4,8 @@ angular.module('ss14Team113App', [
   'ngCookies',
   'ngResource',
   'ngSanitize',
-  'ngRoute'
+  'ngRoute',
+  'lvl.directives.dragdrop'
 ])
   .config(function ($routeProvider) {
     $routeProvider
