@@ -7,7 +7,7 @@
   <h3 class="text-muted">ss14 team 113</h3>
 </div>
 
-<div class="jumbotron">
+<!-- <div class="jumbotron">
   <h1>'Allo, 'Allo!</h1>
   <p class="lead">
     <img src="images/yeoman.png" alt="I'm Yeoman"><br>
@@ -33,4 +33,13 @@
 
 <div class="footer">
   <p>♥ from the Yeoman team</p>
+</div> -->
+ <div ng-controller="MainCtrl">
+       <li ng-repeat="player in players">
+          <span class="candidate-{{player.available}}">{{player}}</span>
+      </li>
 </div>
+<form>
+    <input type="text" name="input" ng-model="text"
+                          ng-pattern="word" required ng-trim="false">
+    <tt>text = {{text}}</tt><br/>
