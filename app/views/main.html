@@ -53,11 +53,11 @@
 </div>
 
 
-<div id="playersDiv" ng-hide="{{showPlayerDiv}}">
+<div id="playersDiv" ng-show="showPlayerDiv">
   <h3>2) Choose Your Opponent</h3>
   <form name='myForm'>
     <div ng-repeat="player in players">
-      <input type='radio' name='playerline' ng-model='opponent' value='player.name' ng-change='newValue(player.name)'> <!-- id is {{player.name}} -->
+      <input type='radio' name='playerline' ng-model='opponent' value='player.name' ng-change='opponentList(player.name)'> <!-- id is {{player.name}} -->
       <em>{{player.name}}</em>: {{player.status}}
     </div>
   </form>
