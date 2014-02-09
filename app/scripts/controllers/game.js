@@ -39,10 +39,6 @@ angular.module('ss14Team113App')
           rotateShip(shipId);
       }
 
-      $scope.$on("SHIP-MOVE", function(event, id) {
-          removeShip(id.toUpperCase())
-      });
-
       init();
 
       function init() {
@@ -69,6 +65,7 @@ angular.module('ss14Team113App')
               col = parseInt(aDropEl.attr('col'));
           if(validDropPosition(id, row, col)) {
               setShipPosition(aDragEl, dropEl);
+              removeShip(id)
               updateBoardStatus(id, row, col);
           }
       }
@@ -101,10 +98,14 @@ angular.module('ss14Team113App')
       }
 
       function validDropPosition(id, row, col) {
-        var length = pieceSize[id],
-            rotated = shipStatus[id.toLowerCase()].rotated;
-        if(onBoard(length, col) && cellsEmpty(length, row, col, rotated, id)) {return true;}
-        else {return false;}
+          var length = pieceSize[id],
+              rotated = shipStatus[id.toLowerCase()].rotated,
+              position = rotated ? row : col;
+              console.log('roated is ' + rotated);
+              console.log('col: ' + col);
+              console.log('row: ' + row);
+          if(onBoard(length, position) && cellsEmpty(length, row, col, rotated, id)) {return true;}
+          else {return false;}
       }
 
       function validRotation(shipId, row, col) {
@@ -112,11 +113,15 @@ angular.module('ss14Team113App')
               length = pieceSize[id],
               rotated = shipStatus[shipId].rotated,
               position = rotated ? col : row ;
+            console.log('roated is ' + rotated);
+            console.log('col: ' + col);
+            console.log('row: ' + row);
           if(onBoard(length, position) && cellsEmpty(length, row, col, !rotated, id)) {return true;}
           else {return false;}
       }
 
       function onBoard(length, pos) {
+          console.log('position: ' + pos);
           if(length + pos <= 11) {return true;}
           else {return false;}
       }
@@ -131,7 +136,7 @@ angular.module('ss14Team113App')
               }
               return true
           }
-          else {
+          else { // not rotated
               for (var i = 0; i < length; i++) {
                   var cell = boardStatus[row-1][col-1 + i];
                   if(cell !== status[id] && cell !== status.EMPTY) {
@@ -143,12 +148,20 @@ angular.module('ss14Team113App')
       }
 
       function setShipPosition(aDragEl, dropEl) {
-          var pos = dropEl.getBoundingClientRect(),
-              adjustY = 7,
-              adjustX = 5,
-              top = pos.top - adjustY,
-              left = pos.left - adjustX;
-          aDragEl.css({position: 'absolute', top: top, left: left});
+          var id = aDragEl.attr('id'),
+              pos = dropEl.getBoundingClientRect(),
+              rotated = shipStatus[id].rotated,
+              adjustment = (pieceSize[id.toUpperCase()] / 2 - .5) * cellSize;
+          if(rotated) {
+              var top = pos.top + adjustment - 7,
+                  left = pos.left - adjustment - 5;
+              aDragEl.css({position: 'absolute', top: top, left: left});
+          }
+          else { // not rotated
+              var top = pos.top - 7,
+                  left = pos.left - 5;
+              aDragEl.css({position: 'absolute', top: top, left: left});
+          }
       }
 
       function updateBoardStatus(id, row, col) {
@@ -163,7 +176,6 @@ angular.module('ss14Team113App')
                   boardStatus[row-1][col-1 + i] = status[id];
               }
           }
-          console.log(boardStatus);
       }
 
       function setBoardSize(boardSize) {
@@ -174,6 +186,7 @@ angular.module('ss14Team113App')
       }
 
       function getShipPosition(id) {
+          console.log(boardStatus);
           for(var i = 0; i < boardSize; i++) {
               for(var j = 0; j < boardSize; j++) {
                   if(boardStatus[i][j] === status[id]) {

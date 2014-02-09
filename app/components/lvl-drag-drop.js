@@ -16,7 +16,6 @@ module.directive('lvlDraggable', ['$rootScope', 'uuid', function($rootScope, uui
 	                e.dataTransfer.setData('text', id);
 
 	                $rootScope.$emit("LVL-DRAG-START");
-                  $rootScope.$broadcast("SHIP-MOVE", id);
 	            });
 	            
 	            el.bind("dragend", function(e) {
