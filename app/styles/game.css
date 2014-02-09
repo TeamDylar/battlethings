@@ -29,29 +29,35 @@
 }
 
 .ship {
-  height: 34px;
-  background-color: red;
+  height: 36px;
+  background-color: white;
+  background-repeat:no-repeat;
   margin: 10px;
 }
 
 #carrier {
   width: 190px;
+  background-image: url(../images/carrier.gif);
 }
 
 #battleship {
   width: 150px;
+  background-image: url(../images/battleship.gif);
 }
 
 #cruiser {
   width: 110px;
+  background-image: url(../images/cruiser.gif);
 }
 
 #destroyer {
   width: 110px;
+  background-image: url(../images/destroyer.gif);
 }
 
 #patrol {
   width: 70px;
+  background-image: url(../images/patrol.gif);
 }
 
 .board {
