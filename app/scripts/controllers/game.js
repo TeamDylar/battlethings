@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('ss14Team113App')
-  .controller('GameCtrl', function ($scope, Game) {
+  .controller('GameCtrl', function ($scope, $timeout, Game) {
       var boardSize = 10,
           cellSize = 40,
           pieceSize = {
@@ -17,7 +17,9 @@ angular.module('ss14Team113App')
               BATTLESHIP: 'BATTLESHIP',
               CRUISER: 'CRUISER',
               DESTROYER: 'DESTROYER',
-              PATROL: 'PATROL'
+              PATROL: 'PATROL',
+              MISS: 'MISS',
+              HIT: 'HIT'
           },
           shipStatus = {
               carrier: {placed: false, rotated: false, sunk: false, hits: 0},
@@ -27,13 +29,15 @@ angular.module('ss14Team113App')
               patrol: {placed: false, rotated: false, sunk: false, hits: 0}
           },
           boardStatus = initBoard(),
-          playersTurn = false;
+          opponentBoardStatus = initBoard();
 
       $scope.playerId = Game.getPlayer();
       $scope.opponentId = Game.getOpponent;
 
       $scope.gameSetup = true;
       $scope.gameMessage = Game.messages.STARTING;
+
+      $scope.playersTurn = false;
 
       $scope.rows = [];
       $scope.cells = [];
@@ -60,7 +64,27 @@ angular.module('ss14Team113App')
               function(reason) {
                   $scope.gameMessage = reason;
               },
-              function(update) {
+              function(update) { // Waiting for opponent
+                  $scope.gameMessage = update;
+              });
+          }
+      }
+
+      $scope.fireShot = function(row, col) {
+          if($scope.playersTurn && validShot(row, col)){
+              $scope.playersTurn = false;
+              Game.fireShot($scope.playerId, row, col).then(function(data) {
+                  $scope.gameMessage = data.message;
+                  updateOpponentsBoard(data);
+                  $timeout(function() {
+                      $scope.gameMessage = Game.messages.OPPONENTS_TURN;
+                  }, 500);
+                  checkTurn();
+              },
+              function(reason) {
+                  $scope.gameMessage = reason;
+              },
+              function(update) { // Not used
                   $scope.gameMessage = update;
               });
           }
@@ -69,17 +93,43 @@ angular.module('ss14Team113App')
       init();
 
       function checkTurn() {
-          console.log('checking turn');
           Game.checkTurn($scope.playerId).then(function(message) {
-              playersTurn = true;
+              $scope.playersTurn = true;
               $scope.gameMessage = message;
           },
           function(reason) {
               $scope.gameMessage = reason;
           },
-          function(update) {
+          function(update) { // Opponent's Turn
               $scope.gameMessage = update;
           });
+      }
+
+      function updateOpponentsBoard(data) {
+          var shot = data.details.shot,
+              row = shot.row - 1,
+              col = shot.col - 1,
+              cell = "#oppBoard" + row + col;
+          if(data.message === Game.messages.HIT) {
+              $(cell).addClass('hit');
+              opponentBoardStatus[row][col] = status.HIT;
+          }
+          else if(data.message === Game.messages.MISS) {
+              $(cell).addClass('miss');
+              opponentBoardStatus[row][col] = status.MISS;
+          }
+          else if(data.message === Game.messages.SUNK) {
+
+          }
+          else {
+              // invalid message
+              console.log('Invalid Message: ' + data.message);
+          }
+      }
+
+      function validShot(row, col) {
+          if(opponentBoardStatus[row-1][col-1] === status.EMPTY) {return true;}
+          else {return false;}
       }
 
       function init() {

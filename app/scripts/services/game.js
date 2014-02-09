@@ -11,7 +11,10 @@ angular.module('ss14Team113App')
         WAITING: 'Waiting for Opponent',
         VICTORY: 'You Won!',
         DEFEAT: 'You Lost :(',
-        ERROR: 'System Error, Our Appologies'
+        ERROR: 'System Error, Our Appologies',
+        HIT: 'A Hit!',
+        MISS: 'Missed',
+        SUNK: 'Ship Sunk'
     };
 
     this.start = function(playerId) {
@@ -24,7 +27,7 @@ angular.module('ss14Team113App')
 
         $timeout(function() {
             deferred.resolve(Game.messages.STARTING);
-        }, 1500);
+        }, 1000);
 
         return deferred.promise;
     };
@@ -39,7 +42,24 @@ angular.module('ss14Team113App')
 
       $timeout(function() {
           deferred.resolve(Game.messages.YOUR_TURN);
-      }, 2000);
+      }, 1000);
+
+      return deferred.promise;
+    }
+
+    this.fireShot = function(playerId, row, col) {
+      var Game = this,
+          deferred = $q.defer();
+
+      $timeout(function() {
+          var data = {};
+          data.message = Game.messages.MISS;
+          data.details = {};
+          data.details.shot = {};
+          data.details.shot.row = row;
+          data.details.shot.col = col;
+          deferred.resolve(data);
+      }, 500);
 
       return deferred.promise;
     }

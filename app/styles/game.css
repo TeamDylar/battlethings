@@ -93,6 +93,27 @@
   border: 1px dashed red !important;
 }
 
+.targetCell:hover {
+    cursor: pointer;
+    background-color: yellow;
+}
+
+.hit {
+    background-color: red;
+}
+
+.hit:hover {
+    background-color: red;
+}
+
+.miss {
+    background-color: blue;
+}
+
+.miss:hover {
+    background-color: blue;
+}
+
 .messages {
   color: blue;
 }

@@ -14,7 +14,13 @@
     <div id="player" class="board">
         <h3 ng-bind="playerId"></h3>
         <div class="row" ng-repeat="row in rows">
-            <div class="cell"  x-lvl-drop-target='true' row="{{$parent.$index+1}}" col="{{$index+1}}" x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
+            <div id="{{'plyrBoard' + $parent.$index + $index}}"
+                 class="cell"  
+                 x-lvl-drop-target='true' 
+                 row="{{$parent.$index+1}}" 
+                 col="{{$index+1}}" 
+                 x-on-drop="dropped(dragEl, dropEl)" 
+                 ng-repeat="cell in cells">
                 &nbsp;
             </div>
         </div>
@@ -25,7 +31,11 @@
     <div id="opponent" class="board">
         <h3 ng-bind="opponentId"></h3>
         <div class="row" ng-repeat="row in rows">
-            <div class="cell" ng-repeat="cell in cells">
+            <div id="{{'oppBoard' + $parent.$index + $index}}"
+                 class="cell" 
+                 ng-class="{targetCell: playersTurn}" 
+                 ng-repeat="cell in cells" 
+                 ng-click="fireShot($parent.$index+1, $index+1)">
                 &nbsp;
             </div>
         </div>
