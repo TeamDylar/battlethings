@@ -5,7 +5,8 @@ angular.module('ss14Team113App', [
   'ngResource',
   'ngSanitize',
   'ngRoute',
-  'lvl.directives.dragdrop'
+  'lvl.directives.dragdrop',
+  'firebase'
 ])
   .config(function ($routeProvider) {
     $routeProvider

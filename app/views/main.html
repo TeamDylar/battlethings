@@ -7,7 +7,7 @@
   <h3 class="text-muted">ss14 team 113</h3>
 </div>
 
-<div class="jumbotron">
+<!-- <div class="jumbotron">
   <h1>'Allo, 'Allo!</h1>
   <p class="lead">
     <img src="images/yeoman.png" alt="I'm Yeoman"><br>
@@ -33,4 +33,40 @@
 
 <div class="footer">
   <p>♥ from the Yeoman team</p>
+</div> -->
+<!--  <div ng-controller="MainCtrl">
+       <li ng-repeat="player in players">
+          <span class="candidate-{{player.available}}">{{player}}</span>
+      </li>
 </div>
+<form>
+    <input type="text" name="input" ng-model="text"
+                          ng-pattern="word" required ng-trim="false">
+    <tt>text = {{text}}</tt><br/>
+</form> -->
+
+<div id="chooseNameDiv">
+<h3>1) Enter Your Name</h3>
+    <input type="text" ng-model="name" placeholder="Player Name">
+<!--     <input type="text" ng-model="msg" ng-keydown="addMessage($event)" placeholder="Message..."> -->
+    <button ng-click='addPlayer()'>This Is My Name</button>
+</div>
+
+
+<div id="playersDiv" ng-hide="{{showPlayerDiv}}">
+  <h3>2) Choose Your Opponent</h3>
+  <form name='myForm'>
+    <div ng-repeat="player in players">
+      <input type='radio' name='playerline' ng-model='opponent' value='player.name' ng-change='newValue(player.name)'> <!-- id is {{player.name}} -->
+      <em>{{player.name}}</em>: {{player.status}}
+    </div>
+  </form>
+
+</div>
+
+<div id="startGameDiv">
+<h3>Start Game</h3>
+<h3>Your Status: {{requested}}</h3>
+</div>
+    <br>
+end of file
