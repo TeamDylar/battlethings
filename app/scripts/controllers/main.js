@@ -21,13 +21,13 @@ angular.module('ss14Team113App')
 
 
     $scope.addPlayer = function() {
-      if (!$scope.name) {
+      if (!$scope.user.name) {
 
         alert('You have to enter a name!');
         return false;
       }
-      console.log('$scope.name is ' + $scope.name);
-      var myName = scrubName($scope.name);
+      console.log('$scope.user.name is ' + $scope.user.name);
+      var myName = scrubName($scope.user.name);
       console.log('myName is ' + myName);
 
 
@@ -37,14 +37,19 @@ angular.module('ss14Team113App')
         var y = nameSnapshot.val();
         if (y === null) {
           // initialize name
-          myPlayer.set({ name: $scope.name, status: 'available'});
+          myPlayer.set({ name: $scope.user.name, status: 'available'});
           $scope.showPlayerDiv = 'true';
           console.log('showPlayerDiv set to ' + $scope.showPlayerDiv);
           myPlayer.on('value', function(nameSnapshot) {
             var z = nameSnapshot.val();
             //displays this player's status in 'your status' section 3
-            $scope.requested = z.status;
-            console.log('z = ' + z.name + z.status);
+            $scope.lobbystatus = z.status;
+            console.log('z = ' + z.name + ' ' + z.status);
+            if ($scope.lobbystatus.match(/^game/i)) {
+              alert($scope.lobbystatus);
+              $scope.showStartGame = true;
+              $scope.showCancelRequest = true;
+              }
             }
           )
         } else {
@@ -64,11 +69,14 @@ angular.module('ss14Team113App')
         console.log(opponentname);
         var myOpponent = playersRef.child(opponentname);
         myOpponent.set({ name: opponentname, status: 'Game Requested by ' + myName});
+        myPlayer.set({ name: $scope.user.name, status: 'Requesting Game with ' + opponentname});
+        $scope.showPlayerDiv = false;
+        $scope.showCancelRequest = true;
       }
 
 
 
 
-      // $scope.players.$add({name: $scope.name, status: 'available'});
+      // $scope.players.$add({name: $scope.user.name, status: 'available'});
     };
   });

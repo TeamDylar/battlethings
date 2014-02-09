@@ -46,15 +46,17 @@
 </form> -->
 
 <div id="chooseNameDiv">
-<h3>1) Enter Your Name</h3>
-    <input type="text" ng-model="name" placeholder="Player Name">
+<h3>Enter Your Name</h3>
+    <input type="text" ng-model="user.name" placeholder="Player Name">
 <!--     <input type="text" ng-model="msg" ng-keydown="addMessage($event)" placeholder="Message..."> -->
     <button ng-click='addPlayer()'>This Is My Name</button>
+    <!-- {{user.name}} -->
 </div>
 
+<!-- <div ng-repeat="player in players | filter: {status: 'available'}">{{player.name}}</div> -->
 
 <div id="playersDiv" ng-show="showPlayerDiv">
-  <h3>2) Choose Your Opponent</h3>
+  <h3>{{user.name}}, choose Your Opponent</h3>
   <form name='myForm'>
     <div ng-repeat="player in players">
       <input type='radio' name='playerline' ng-model='opponent' value='player.name' ng-change='opponentList(player.name)'> <!-- id is {{player.name}} -->
@@ -65,8 +67,14 @@
 </div>
 
 <div id="startGameDiv">
-<h3>Start Game</h3>
-<h3>Your Status: {{requested}}</h3>
+  <h3>Your Status: {{lobbystatus}}</h3>
+
+  <div ng-show='showCancelRequest'>
+    <button>Cancel Request</button>
+  </div>
+
+  <div ng-show='showStartGame'>
+    <button>Start Game</button>
+  </div>
+
 </div>
-    <br>
-end of file
