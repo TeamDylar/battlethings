@@ -76,8 +76,12 @@ angular.module('ss14Team113App')
       function rotateShip(shipId) {
           var shipEl = $('#' + shipId),
               adjustment = (pieceSize[shipId.toUpperCase()] / 2 - .5) * cellSize,
-              offset = shipEl.offset();
-          if(validRotation(shipId)) {
+              offset = shipEl.offset(),
+              id = shipId.toUpperCase(),
+              shipPos = getShipPosition(id),
+              row = shipPos.row + 1,
+              col = shipPos.col + 1;
+          if(validRotation(shipId, row, col)) {
               if(shipStatus[shipId].rotated) {
                   var top = offset.top - 12,
                       left = offset.left - 8;
@@ -91,8 +95,8 @@ angular.module('ss14Team113App')
                   shipEl.css({transform: 'rotate(90deg)', top: top, left: left});
               }
               shipStatus[shipId].rotated = !shipStatus[shipId].rotated;
-              //updateBoardStatus(id, row, col) in func check for rotations
-              // and clear old spots
+              removeShip(id);
+              updateBoardStatus(id, row, col)
           }
       }
 
@@ -103,48 +107,34 @@ angular.module('ss14Team113App')
         else {return false;}
       }
 
-      function validRotation(shipId) {
+      function validRotation(shipId, row, col) {
           var id = shipId.toUpperCase(),
-              shipPos = getShipPosition(id),
               length = pieceSize[id],
               rotated = shipStatus[shipId].rotated,
-              row = shipPos.row + 1,
-              col = shipPos.col + 1,
               position = rotated ? col : row ;
           if(onBoard(length, position) && cellsEmpty(length, row, col, !rotated, id)) {return true;}
           else {return false;}
       }
 
       function onBoard(length, pos) {
-          console.log(length + pos);
           if(length + pos <= 11) {return true;}
           else {return false;}
       }
 
       function cellsEmpty(length, row, col, rotated, id) {
-          console.log('row: ' + row);
-          console.log('col: ' + col);
           if(rotated) {
-              console.log('rotated');
               for (var i = 0; i < length; i++) {
                   var cell = boardStatus[row-1 + i][col-1];
                   if(cell !== status[id] && cell !== status.EMPTY) {
-                      console.log('row: ' + row);
-                      console.log('col: ' + col);
-                      console.log(boardStatus[row-1 + 1][col-1]);
                       return false;
                   }
               }
               return true
           }
           else {
-              console.log('not rotated');
               for (var i = 0; i < length; i++) {
                   var cell = boardStatus[row-1][col-1 + i];
                   if(cell !== status[id] && cell !== status.EMPTY) {
-                      console.log('row: ' + row);
-                      console.log('col: ' + col);
-                      console.log(boardStatus[row-1][col-1 + i]);
                       return false;
                   }
               }
@@ -163,9 +153,17 @@ angular.module('ss14Team113App')
 
       function updateBoardStatus(id, row, col) {
           var length = pieceSize[id];
-          for (var i = 0; i < length; i++) {
-              boardStatus[row-1][col-1 + i] = status[id];
+          if(shipStatus[id.toLowerCase()].rotated) {
+              for (var i = 0; i < length; i++) {
+                  boardStatus[row-1 + i][col-1] = status[id];
+              }
           }
+          else {
+              for (var i = 0; i < length; i++) {
+                  boardStatus[row-1][col-1 + i] = status[id];
+              }
+          }
+          console.log(boardStatus);
       }
 
       function setBoardSize(boardSize) {
