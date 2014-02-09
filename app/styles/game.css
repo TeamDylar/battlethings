@@ -29,7 +29,7 @@
 }
 
 .ship {
-  height: 36px;
+  height: 34px;
   background-color: red;
   margin: 10px;
 }
@@ -73,4 +73,9 @@
   display: inline-block;
   text-align: center;
   font-size: 25px;
+}
+
+.lvl-over {
+    /* applied to a drop target when a draggable object is over it */
+    border: 1px dashed red !important;
 }

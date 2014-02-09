@@ -1,16 +1,16 @@
 <div id="game-page">
 
     <div class="ship-container">
-        <div id="carrier" class="ship" x-lvl-draggable='true'>drag me!</div>
-        <div id="battleship" class="ship" x-lvl-draggable='true'>drag me!</div>
-        <div id="cruiser" class="ship" x-lvl-draggable='true'>drag me!</div>
-        <div id="destroyer" class="ship" x-lvl-draggable='true'>drag me!</div>
-        <div id="patrol" class="ship" x-lvl-draggable='true'>drag me!</div>
+        <div id="carrier" class="ship" x-lvl-draggable='true' ng-click="rotate('carrier')">drag me!</div>
+        <div id="battleship" class="ship" x-lvl-draggable='true' ng-click="rotate('battleship')">drag me!</div>
+        <div id="cruiser" class="ship" x-lvl-draggable='true' ng-click="rotate('cruiser')">drag me!</div>
+        <div id="destroyer" class="ship" x-lvl-draggable='true' ng-click="rotate('destroyer')">drag me!</div>
+        <div id="patrol" class="ship" x-lvl-draggable='true' ng-click="rotate('patrol')">drag me!</div>
     </div>
 
     <div id="player" class="board">
         <div class="row" ng-repeat="row in rows">
-            <div class="cell"  x-lvl-drop-target='true'  x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
+            <div class="cell"  x-lvl-drop-target='true' row="{{$parent.$index+1}}" col="{{$index+1}}" x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
                 &nbsp;
             </div>
         </div>
@@ -20,7 +20,7 @@
 
     <div id="opponent" class="board">
         <div class="row" ng-repeat="row in rows">
-            <div class="cell" x-lvl-drop-target='true' x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
+            <div class="cell" ng-repeat="cell in cells">
                 &nbsp;
             </div>
         </div>
