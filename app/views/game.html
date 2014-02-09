@@ -1,2 +1,29 @@
-<div id="game-page">This is the game view.</div>
-<div x-lvl-draggable='true'>drag me!</div>
+<div id="game-page">
+
+    <div class="ship-container">
+        <div id="carrier" class="ship" x-lvl-draggable='true'>drag me!</div>
+        <div id="battleship" class="ship" x-lvl-draggable='true'>drag me!</div>
+        <div id="cruiser" class="ship" x-lvl-draggable='true'>drag me!</div>
+        <div id="destroyer" class="ship" x-lvl-draggable='true'>drag me!</div>
+        <div id="patrol" class="ship" x-lvl-draggable='true'>drag me!</div>
+    </div>
+
+    <div id="player" class="board">
+        <div class="row" ng-repeat="row in rows">
+            <div class="cell"  x-lvl-drop-target='true'  x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+
+    <div class="barrier"></div>
+
+    <div id="opponent" class="board">
+        <div class="row" ng-repeat="row in rows">
+            <div class="cell" x-lvl-drop-target='true' x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
+                &nbsp;
+            </div>
+        </div>
+    </div>
+
+</div>

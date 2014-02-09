@@ -21,3 +21,5 @@ angular.module('ss14Team113App', [
         redirectTo: '/'
       });
   });
+
+jQuery.event.props.push('dataTransfer');
