@@ -24,7 +24,7 @@
   border: 1px solid black;
   text-align: center;
   vertical-align: top;
-  margin-top: 100px;
+  margin-top: 120px;
   margin-right: 20px;
 }
 
@@ -58,6 +58,11 @@
 #patrol {
   width: 70px;
   background-image: url(../images/patrol.gif);
+}
+
+.placementBtn {
+    margin-left: -205px;
+    margin-right: 100px;
 }
 
 .board {

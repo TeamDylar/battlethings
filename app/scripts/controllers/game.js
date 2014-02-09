@@ -39,6 +39,11 @@ angular.module('ss14Team113App')
           rotateShip(shipId);
       }
 
+      $scope.startGame = function() {
+          if(!placementComplete()){alert('Must deploy all your animal warriors!');}
+          else{alert('Starting the game!');}
+      }
+
       init();
 
       function init() {
@@ -67,6 +72,7 @@ angular.module('ss14Team113App')
               setShipPosition(aDragEl, dropEl);
               removeShip(id)
               updateBoardStatus(id, row, col);
+              shipStatus[id.toLowerCase()].placed = true;
           }
       }
 
@@ -101,9 +107,6 @@ angular.module('ss14Team113App')
           var length = pieceSize[id],
               rotated = shipStatus[id.toLowerCase()].rotated,
               position = rotated ? row : col;
-              console.log('roated is ' + rotated);
-              console.log('col: ' + col);
-              console.log('row: ' + row);
           if(onBoard(length, position) && cellsEmpty(length, row, col, rotated, id)) {return true;}
           else {return false;}
       }
@@ -113,15 +116,11 @@ angular.module('ss14Team113App')
               length = pieceSize[id],
               rotated = shipStatus[shipId].rotated,
               position = rotated ? col : row ;
-            console.log('roated is ' + rotated);
-            console.log('col: ' + col);
-            console.log('row: ' + row);
           if(onBoard(length, position) && cellsEmpty(length, row, col, !rotated, id)) {return true;}
           else {return false;}
       }
 
       function onBoard(length, pos) {
-          console.log('position: ' + pos);
           if(length + pos <= 11) {return true;}
           else {return false;}
       }
@@ -186,7 +185,6 @@ angular.module('ss14Team113App')
       }
 
       function getShipPosition(id) {
-          console.log(boardStatus);
           for(var i = 0; i < boardSize; i++) {
               for(var j = 0; j < boardSize; j++) {
                   if(boardStatus[i][j] === status[id]) {
@@ -204,6 +202,16 @@ angular.module('ss14Team113App')
                   }
               }
           }
+      }
+
+      function placementComplete() {
+          var allPlaced = true;
+          angular.forEach(shipStatus, function(ship) {
+            console.log(!ship.placed);
+            if(!ship.placed) {allPlaced = false}
+          });
+          console.log(allPlaced);
+          return allPlaced;
       }
 
   });
