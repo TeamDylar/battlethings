@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('ss14Team113App')
-  .controller('GameCtrl', function ($scope) {
+  .controller('GameCtrl', function ($scope, Game) {
       var boardSize = 10,
           cellSize = 40,
           pieceSize = {
@@ -26,7 +26,14 @@ angular.module('ss14Team113App')
               destroyer: {placed: false, rotated: false, sunk: false, hits: 0},
               patrol: {placed: false, rotated: false, sunk: false, hits: 0}
           },
-          boardStatus = initBoard();
+          boardStatus = initBoard(),
+          playersTurn = false;
+
+      $scope.playerId = Game.getPlayer();
+      $scope.opponentId = Game.getOpponent;
+
+      $scope.gameSetup = true;
+      $scope.gameMessage = Game.messages.STARTING;
 
       $scope.rows = [];
       $scope.cells = [];
@@ -40,11 +47,40 @@ angular.module('ss14Team113App')
       }
 
       $scope.startGame = function() {
-          if(!placementComplete()){alert('Must deploy all your animal warriors!');}
-          else{alert('Starting the game!');}
+          if(!placementComplete()){
+              alert('Must deploy all your animal warriors!');
+          }
+          else {
+              $scope.gameSetup = false;
+
+              Game.start($scope.playerId).then(function(message) {
+                  $scope.gameMessage = message;
+                  checkTurn();
+              },
+              function(reason) {
+                  $scope.gameMessage = reason;
+              },
+              function(update) {
+                  $scope.gameMessage = update;
+              });
+          }
       }
 
       init();
+
+      function checkTurn() {
+          console.log('checking turn');
+          Game.checkTurn($scope.playerId).then(function(message) {
+              playersTurn = true;
+              $scope.gameMessage = message;
+          },
+          function(reason) {
+              $scope.gameMessage = reason;
+          },
+          function(update) {
+              $scope.gameMessage = update;
+          });
+      }
 
       function init() {
           setBoardSize(boardSize);
@@ -206,6 +242,8 @@ angular.module('ss14Team113App')
 
       function placementComplete() {
           var allPlaced = true;
+          // for testing
+          return true;
           angular.forEach(shipStatus, function(ship) {
             console.log(!ship.placed);
             if(!ship.placed) {allPlaced = false}

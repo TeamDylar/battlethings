@@ -1,15 +1,18 @@
 <div id="game-page">
 
-    <div class="ship-container">
-        <div id="carrier" class="ship" x-lvl-draggable='true' ng-click="rotate('carrier')"></div>
-        <div id="battleship" class="ship" x-lvl-draggable='true' ng-click="rotate('battleship')"></div>
-        <div id="cruiser" class="ship" x-lvl-draggable='true' ng-click="rotate('cruiser')"></div>
-        <div id="destroyer" class="ship" x-lvl-draggable='true' ng-click="rotate('destroyer')"></div>
-        <div id="patrol" class="ship" x-lvl-draggable='true' ng-click="rotate('patrol')"></div>
+    <div class="setup-container" ng-show="gameSetup">
+        <div class="ship-container">
+            <div id="carrier" class="ship" x-lvl-draggable='true' ng-click="rotate('carrier')"></div>
+            <div id="battleship" class="ship" x-lvl-draggable='true' ng-click="rotate('battleship')"></div>
+            <div id="cruiser" class="ship" x-lvl-draggable='true' ng-click="rotate('cruiser')"></div>
+            <div id="destroyer" class="ship" x-lvl-draggable='true' ng-click="rotate('destroyer')"></div>
+            <div id="patrol" class="ship" x-lvl-draggable='true' ng-click="rotate('patrol')"></div>
+        </div>
+        <button class="placementBtn" ng-click="startGame()">Confirm Placements</button>
     </div>
-    <button class="placementBtn" ng-click="startGame()">Confirm Placements</button>
 
     <div id="player" class="board">
+        <h3 ng-bind="playerId"></h3>
         <div class="row" ng-repeat="row in rows">
             <div class="cell"  x-lvl-drop-target='true' row="{{$parent.$index+1}}" col="{{$index+1}}" x-on-drop="dropped(dragEl, dropEl)" ng-repeat="cell in cells">
                 &nbsp;
@@ -20,11 +23,16 @@
     <div class="barrier"></div>
 
     <div id="opponent" class="board">
+        <h3 ng-bind="opponentId"></h3>
         <div class="row" ng-repeat="row in rows">
             <div class="cell" ng-repeat="cell in cells">
                 &nbsp;
             </div>
         </div>
+    </div>
+
+    <div class="messages" ng-hide="gameSetup">
+        <h2>{{gameMessage}}</h2>
     </div>
 
 </div>
