@@ -45,11 +45,28 @@
     <tt>text = {{text}}</tt><br/>
 </form> -->
 
-    <div id="playersDiv">
-      <div ng-repeat="player in players"><em>{{player.player}}</em>: {{player.status}}</div>
-    </div>
-    <input type="text" ng-model="name" placeholder="Name">
-    <input type="text" ng-model="msg" ng-keydown="addMessage($event)" placeholder="Message...">
+<div id="chooseNameDiv">
+<h3>1) Enter Your Name</h3>
+    <input type="text" ng-model="name" placeholder="Player Name">
+<!--     <input type="text" ng-model="msg" ng-keydown="addMessage($event)" placeholder="Message..."> -->
+    <button ng-click='addPlayer()'>This Is My Name</button>
+</div>
 
+
+<div id="playersDiv">
+  <h3>2) Choose Your Opponent</h3>
+  <form name='myForm'>
+    <div ng-repeat="player in players">
+      <input type=radio name='playerradio' ng-model='opponent' value='{{player.name}}'> id is {{player.name}}
+      <em>{{player.name}}</em>: {{player.status}}
+    </div>
+    <tt>opponent = {{opponent | json}}</tt><br/>
+  </form>
+
+</div>
+
+<div id="startGameDiv">
+<h3>Start Game</h3>
+</div>
     <br>
 end of file
