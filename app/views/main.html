@@ -53,20 +53,20 @@
 </div>
 
 
-<div id="playersDiv">
+<div id="playersDiv" ng-hide="{{showPlayerDiv}}">
   <h3>2) Choose Your Opponent</h3>
   <form name='myForm'>
     <div ng-repeat="player in players">
-      <input type=radio name='playerradio' ng-model='opponent' value='{{player.name}}'> id is {{player.name}}
+      <input type='radio' name='playerline' ng-model='opponent' value='player.name' ng-change='newValue(player.name)'> <!-- id is {{player.name}} -->
       <em>{{player.name}}</em>: {{player.status}}
     </div>
-    <tt>opponent = {{opponent | json}}</tt><br/>
   </form>
 
 </div>
 
 <div id="startGameDiv">
 <h3>Start Game</h3>
+<h3>Your Status: {{requested}}</h3>
 </div>
     <br>
 end of file

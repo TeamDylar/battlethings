@@ -17,7 +17,11 @@ angular.module('ss14Team113App')
       return name;
     }
 
-
+    $scope.newValue = function(value) {
+      console.log(value);
+      var myOpponent = playersRef.child(value);
+      myOpponent.set({ name: value, status: 'Game Requested'});
+    }
 
 
     $scope.addPlayer = function() {
@@ -36,7 +40,16 @@ angular.module('ss14Team113App')
       myPlayer.once('value', function(nameSnapshot) {
         var y = nameSnapshot.val();
         if (y === null) {
+          // initialize name
           myPlayer.set({ name: $scope.name, status: 'available'});
+          // $scope.showPlayerDiv = !$scope.showPlayerDiv;
+          myPlayer.on('value', function(nameSnapshot) {
+            var z = nameSnapshot.val();
+            //displays this player's status in 'your status' section 3
+            $scope.requested = z.status;
+            console.log('z = ' + z.name + z.status);
+            }
+          )
         } else {
           alert('Name already taken');
           return false;
