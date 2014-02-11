@@ -32,13 +32,25 @@
 }
 
 .ship {
-  height: 36px;
-  background-color: white;
+  height: 38px;
   background-repeat:no-repeat;
   margin: 10px;
 }
 
+.sunk-ship {
+  height: 38px;
+  background-color: red;
+  background-repeat: no-repeat;
+  margin: 10px;
+}
+
 #carrier {
+  width: 190px;
+  background-image: url(../images/carrier.gif);
+}
+
+#carrierOpponent {
+  display: none;
   width: 190px;
   background-image: url(../images/carrier.gif);
 }
@@ -48,7 +60,19 @@
   background-image: url(../images/battleship.gif);
 }
 
+#battleshipOpponent {
+  display: none;
+  width: 150px;
+  background-image: url(../images/battleship.gif);
+}
+
 #cruiser {
+  width: 110px;
+  background-image: url(../images/cruiser.gif);
+}
+
+#cruiserOpponent {
+  display: none;
   width: 110px;
   background-image: url(../images/cruiser.gif);
 }
@@ -58,7 +82,19 @@
   background-image: url(../images/destroyer.gif);
 }
 
+#destroyerOpponent {
+  display: none;
+  width: 110px;
+  background-image: url(../images/destroyer.gif);
+}
+
 #patrol {
+  width: 70px;
+  background-image: url(../images/patrol.gif);
+}
+
+#patrolOpponent {
+  display: none;
   width: 70px;
   background-image: url(../images/patrol.gif);
 }
