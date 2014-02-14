@@ -74,6 +74,8 @@ angular.module('ss14Team113App')
         $scope.showCancelRequest = true;
       }
 
+      myPlayer.onDisconnect().remove();
+
 
 
 
