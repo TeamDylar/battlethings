@@ -17,8 +17,8 @@
             <div custom-id="{{'playerBoard' + $parent.$index + $index}}"
                  class="cell" 
                  x-lvl-drop-target='true' 
-                 row="{{$parent.$index+1}}" 
-                 col="{{$index+1}}" 
+                 row="{{$parent.$index}}" 
+                 col="{{$index}}" 
                  x-on-drop="dropped(dragEl, dropEl)" 
                  ng-repeat="cell in cells">
                 &nbsp;
@@ -35,7 +35,7 @@
                  class="cell" 
                  ng-class="{targetCell: playersTurn}" 
                  ng-repeat="cell in cells" 
-                 ng-click="fireShot($parent.$index+1, $index+1)">
+                 ng-click="fireShot($parent.$index, $index)">
                 &nbsp;
             </div>
         </div>

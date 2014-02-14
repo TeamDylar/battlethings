@@ -107,8 +107,8 @@ angular.module('ss14Team113App')
       // to apply to position of ships.
 
       function receiveShot(cell) {
-          var row = cell.row - 1,
-              col = cell.col - 1,
+          var row = cell.row,
+              col = cell.col,
               result = boardStatus[row][col],
               cellId = "playerBoard" + row + col,
               cellEl = $('div[custom-id="' + cellId + '"]'),
@@ -136,7 +136,7 @@ angular.module('ss14Team113App')
               }
           }
           else { // MISS
-              boardStatus[cell.row-1][cell.col-1] = status.MISS;
+              boardStatus[cell.row][cell.col] = status.MISS;
               cellEl.addClass('miss');
               data.message = Game.messages.MISS
           }
@@ -183,7 +183,7 @@ angular.module('ss14Team113App')
       }
 
       function validShot(row, col) {
-          if(opponentBoardStatus[row-1][col-1] === status.EMPTY) {return true;}
+          if(opponentBoardStatus[row][col] === status.EMPTY) {return true;}
           else {return false;}
       }
 
@@ -217,8 +217,8 @@ angular.module('ss14Team113App')
           var shipEl = $('#' + shipId),
               id = shipId,
               shipPos = getShipPosition(id),
-              row = shipPos.row + 1,
-              col = shipPos.col + 1,
+              row = shipPos.row,
+              col = shipPos.col,
               height = shipEl.css('width'),
               width = shipEl.css('height');
           if(validRotation(shipId, row, col) && $scope.gameSetup) {
@@ -252,14 +252,14 @@ angular.module('ss14Team113App')
       }
 
       function onBoard(length, pos) {
-          if(length + pos <= 11) {return true;}
+          if(length + pos <= 10) {return true;}
           else {return false;}
       }
 
       function cellsEmpty(length, row, col, rotated, id) {
           if(rotated) {
               for (var i = 0; i < length; i++) {
-                  var cell = boardStatus[row-1 + i][col-1];
+                  var cell = boardStatus[row + i][col];
                   if(cell !== status[id] && cell !== status.EMPTY) {
                       return false;
                   }
@@ -268,7 +268,7 @@ angular.module('ss14Team113App')
           }
           else { // not rotated
               for (var i = 0; i < length; i++) {
-                  var cell = boardStatus[row-1][col-1 + i];
+                  var cell = boardStatus[row][col + i];
                   if(cell !== status[id] && cell !== status.EMPTY) {
                       return false;
                   }
@@ -307,12 +307,12 @@ angular.module('ss14Team113App')
           var length = shipStatus[id].size;
           if(shipStatus[id].rotated) {
               for (var i = 0; i < length; i++) {
-                  boardStatus[row-1 + i][col-1] = status[id];
+                  boardStatus[row + i][col] = status[id];
               }
           }
           else {
               for (var i = 0; i < length; i++) {
-                  boardStatus[row-1][col-1 + i] = status[id];
+                  boardStatus[row][col + i] = status[id];
               }
           }
       }
