@@ -2,8 +2,6 @@
 /**
  * TODO: Make id / ship / shipId variable consistent
  * TODO: Try to separate game logic from board / move so can use in other games
- *
- * TODO: switch status.HIT to status.hit etc.
  */
 angular.module('ss14Team113App')
   .controller('GameCtrl', function ($scope, $timeout, Game) {
@@ -125,27 +123,29 @@ angular.module('ss14Team113App')
        * Callback passed to Game service to be called when opponent shoots.
        * Determines the results of the shot and updates the player's board.
        * Passes this info back to the opponent through the Game service via respondToShot.
+       *
+       * TODO: Move to Board Directive? Manipulates DOM
        */
       function receiveShot(cell) {
-          var row = cell.row,
-              col = cell.col,
-              result = boardStatus[row][col],
-              cellId = "playerBoard" + row + col,
+          var result = boardStatus[cell.row][cell.col],
+              cellId = "playerBoard" + cell.row + cell.col,
               cellEl = $('div[custom-id="' + cellId + '"]'),
-              ship = result,
+              shipId = result,
               gameOver = false,
-              sunk = false,
-              data = {details: {gameOver: false, shot: {row: row, col: col}, ship: {}}, message: ''};
-          if(result !== status.EMPTY) { // HIT
+              data = {details: {gameOver: false, 
+                                shot: {row: cell.row, col: cell.col}, 
+                                ship: {}}, 
+                      message: ''};
+          if(result !== status.empty) { // HIT
               cellEl.addClass('hit');
-              shipStatus[ship].hits = shipStatus[ship].hits + 1;
+              shipStatus[shipId].hits = shipStatus[shipId].hits + 1;
               data.message = Game.messages.HIT;
-              if(shipStatus[ship].hits === shipStatus[result].size) { // SUNK
-                  $('#' + ship).addClass('sunk-ship');
-                  shipStatus[ship].sunk = true;
-                  data.details.ship.startCell = getShipPosition(ship);
-                  data.details.ship.type = ship;
-                  data.details.ship.rotated = shipStatus[ship].rotated;
+              if(shipStatus[shipId].hits === shipStatus[shipId].size) { // SUNK
+                  $('#' + shipId).addClass('sunk-ship');
+                  shipStatus[shipId].sunk = true;
+                  data.details.ship.startCell = getShipPosition(shipId);
+                  data.details.ship.type = shipId;
+                  data.details.ship.rotated = shipStatus[shipId].rotated;
                   gameOver = true;
                   data.message = Game.messages.SUNK;
                   angular.forEach(shipStatus, function(ship) {
@@ -156,7 +156,6 @@ angular.module('ss14Team113App')
               }
           }
           else { // MISS
-              boardStatus[cell.row][cell.col] = status.MISS;
               cellEl.addClass('miss');
               data.message = Game.messages.MISS
           }
@@ -191,36 +190,34 @@ angular.module('ss14Team113App')
        */
       function updateOpponentsBoard(data) {
           var shot = data.details.shot,
-              row = shot.row,
-              col = shot.col,
-              cell = "#oppBoard" + row + col;
-          if(data.message === Game.messages.HIT) {
-              $(cell).addClass('hit');
-              opponentBoardStatus[row][col] = status.HIT;
-          }
-          else if(data.message === Game.messages.MISS) {
-              $(cell).addClass('miss');
-              opponentBoardStatus[row][col] = status.MISS;
-          }
-          else if(data.message === Game.messages.SUNK) {
-              $(cell).addClass('hit');
-              opponentBoardStatus[row][col] = status.HIT;
-              setSunkShipPosition(data.details.ship);
-          }
-          else {
-              console.log('Invalid Message: ' + data.message);
+              cell = "#oppBoard" + shot.row + shot.col;
+          switch (data.message)
+          {
+          case Game.messages.SUNK:
+            setSunkShipPosition(data.details.ship);
+            // Intentional fall through - sunk is a hit
+          case Game.messages.HIT:
+            $(cell).addClass('hit');
+            opponentBoardStatus[shot.row][shot.col] = status.hit;
+            break;
+          case Game.messages.MISS:
+            $(cell).addClass('miss');
+            opponentBoardStatus[shot.row][shot.col] = status.miss;
+            break;
+          default:
+            console.log('Invalid Message: ' + data.messages);
           }
       }
 
-      /*
+      /**
        * validShot
        */
       function validShot(row, col) {
-          if(opponentBoardStatus[row][col] === status.EMPTY) {return true;}
+          if(opponentBoardStatus[row][col] === status.empty) {return true;}
           else {return false;}
       }
 
-      /*
+      /**
        * initBoard
        *
        * Creates the boardStatus object to hold game state
@@ -231,7 +228,7 @@ angular.module('ss14Team113App')
           for(var i = 0; i < boardSize; i++) {
               var row = [];
               for(var j = 0; j < boardSize; j++) {
-                  row.push(status.EMPTY);
+                  row.push(status.empty);
               }
               board[i] = row;
           }
@@ -247,14 +244,14 @@ angular.module('ss14Team113App')
       function placeShip(dragEl, dropEl) {
           var aDragEl = angular.element(dragEl),
               aDropEl = angular.element(dropEl),
-              id = aDragEl.attr('id'),
+              shipId = aDragEl.attr('id'),
               row = parseInt(aDropEl.attr('row')),
               col = parseInt(aDropEl.attr('col'));
-          if(validDropPosition(id, row, col)) {
+          if(validDropPosition(shipId, row, col)) {
               setShipPosition(aDragEl, dropEl);
-              removeShip(id)
-              updateBoardStatus(id, row, col);
-              shipStatus[id].placed = true;
+              removeShip(shipId)
+              updateBoardStatus(shipId, row, col);
+              shipStatus[shipId].placed = true;
           }
       }
 
@@ -265,22 +262,19 @@ angular.module('ss14Team113App')
        */
       function rotateShip(shipId) {
           var shipEl = $('#' + shipId),
-              id = shipId,
-              shipPos = getShipPosition(id),
-              row = shipPos.row,
-              col = shipPos.col,
+              shipPos = getShipPosition(shipId),
               height = shipEl.css('width'),
-              width = shipEl.css('height');
-          if(validRotation(shipId, row, col) && $scope.gameSetup) {
-              if(shipStatus[shipId].rotated) {
-                  shipEl.css({backgroundImage: 'url(../images/' + shipId + '.gif)', height: height, width: width});
-              }
-              else { // not rotated
-                  shipEl.css({backgroundImage: 'url(../images/' + shipId + '-vert.gif)', height: height, width: width});
-              }
+              width = shipEl.css('height'),
+              urlTail = shipStatus[shipId].rotated ? '.gif)' : '-vert.gif)';
+          if(validRotation(shipId, shipPos.row, shipPos.col) && $scope.gameSetup) {
+              shipEl.css({
+                backgroundImage: 'url(../images/' + shipId + urlTail,
+                height: height,
+                width: width
+              });
               shipStatus[shipId].rotated = !shipStatus[shipId].rotated;
-              removeShip(id);
-              updateBoardStatus(id, row, col)
+              removeShip(shipId);
+              updateBoardStatus(shipId, shipPos.row, shipPos.col)
           }
       }
 
@@ -330,7 +324,7 @@ angular.module('ss14Team113App')
           if(rotated) {
               for (var i = 0; i < length; i++) {
                   var cell = boardStatus[row + i][col];
-                  if(cell !== status[id] && cell !== status.EMPTY) {
+                  if(cell !== status[id] && cell !== status.empty) {
                       return false;
                   }
               }
@@ -339,7 +333,7 @@ angular.module('ss14Team113App')
           else { // not rotated
               for (var i = 0; i < length; i++) {
                   var cell = boardStatus[row][col + i];
-                  if(cell !== status[id] && cell !== status.EMPTY) {
+                  if(cell !== status[id] && cell !== status.empty) {
                       return false;
                   }
               }
@@ -351,6 +345,7 @@ angular.module('ss14Team113App')
        * setShipPosition
        *
        * Upon a valid drop move the ship element to the target cell
+       * TODO: Move to directive (CELL?) since manipulates DOM
        */
       function setShipPosition(aDragEl, dropEl) {
           var aDropEl = angular.element(dropEl);
@@ -441,7 +436,7 @@ angular.module('ss14Team113App')
           for(var i = 0; i < boardSize; i++) {
               for(var j = 0; j < boardSize; j++) {
                   if(boardStatus[i][j] === status[id]) {
-                      boardStatus[i][j] = status.EMPTY;
+                      boardStatus[i][j] = status.empty;
                   }
               }
           }
