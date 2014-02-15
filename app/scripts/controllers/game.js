@@ -1,22 +1,14 @@
 'use strict';
 /**
- * TODO: Make ships all lower case for consitency.
- * TODO: Make board 0 - n-1 for consitency
- * TODO: Move piece size into ship status.
  * TODO: Make id / ship / shipId variable consistent
  * TODO: Try to separate game logic from board / move so can use in other games
+ *
+ * TODO: switch status.HIT to status.hit etc.
  */
 angular.module('ss14Team113App')
   .controller('GameCtrl', function ($scope, $timeout, Game) {
       var boardSize = 10,
           cellSize = 40,
-          //pieceSize = {
-          //    CARRIER: 5,
-          //    BATTLESHIP: 4,
-          //    CRUISER: 3,
-          //    DESTROYER: 3,
-          //    PATROL: 2
-          //},
           status = {
               empty: 'empty',
               carrier: 'carrier',
@@ -48,14 +40,32 @@ angular.module('ss14Team113App')
       $scope.rows = [];
       $scope.cells = [];
 
+      /**
+       * $scope.dropped
+       *
+       * Triggered by upon drop portion of drag and drop.
+       * Called if drag element is over a target element
+       */
       $scope.dropped = function(dragEl, dropEl) {
           placeShip(dragEl, dropEl);
       }
 
+      /**
+       * $scope.rotate
+       *
+       * Triggered by player clicking on a ship.
+       * Rotates the ship +/- 90 degrees
+       */
       $scope.rotate = function(shipId) {
           if(shipStatus[shipId].placed) {rotateShip(shipId);}
       }
 
+      /**
+       * $scope.startGame
+       *
+       * Triggered by player click on placement complete button
+       * Starts the game if all pieces are placed.
+       */
       $scope.startGame = function() {
           if(!placementComplete()){
               alert('Must deploy all your animal warriors!');
@@ -76,6 +86,12 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * $scope.fireShot
+       *
+       * Triggered by player clicking on opponents board
+       * Fires a shot if it is the player's turn
+       */
       $scope.fireShot = function(row, col) {
           if($scope.playersTurn && validShot(row, col)){
               $scope.playersTurn = false;
@@ -102,10 +118,14 @@ angular.module('ss14Team113App')
           Game.registerFn(Game.callbackName.UPDATE_BOARD, receiveShot);
       }
 
-      // on scroll & resize calculate position of board.
-      // difference between start and calculated is adjustment
-      // to apply to position of ships.
 
+      /**
+       * receiveShot
+       *
+       * Callback passed to Game service to be called when opponent shoots.
+       * Determines the results of the shot and updates the player's board.
+       * Passes this info back to the opponent through the Game service via respondToShot.
+       */
       function receiveShot(cell) {
           var row = cell.row,
               col = cell.col,
@@ -146,6 +166,9 @@ angular.module('ss14Team113App')
           if(gameOver) {endGame();}
       }
 
+      /**
+       * checkTurn
+       */
       function checkTurn() {
           Game.checkTurn($scope.playerId).then(function(message) {
               $scope.playersTurn = true;
@@ -159,6 +182,13 @@ angular.module('ss14Team113App')
           });
       }
 
+      /**
+       * updateOpponentsBoard
+       *
+       * Updates opponent's board on players screen.
+       * Occurs after a player shoots and recieves the results back from the Game service
+       * Recieves the data of the deferred passed back to $scope.fireShot
+       */
       function updateOpponentsBoard(data) {
           var shot = data.details.shot,
               row = shot.row,
@@ -182,11 +212,20 @@ angular.module('ss14Team113App')
           }
       }
 
+      /*
+       * validShot
+       */
       function validShot(row, col) {
           if(opponentBoardStatus[row][col] === status.EMPTY) {return true;}
           else {return false;}
       }
 
+      /*
+       * initBoard
+       *
+       * Creates the boardStatus object to hold game state
+       * All status is initially set to empty.
+       */ 
       function initBoard() {
           var board = [];
           for(var i = 0; i < boardSize; i++) {
@@ -199,6 +238,12 @@ angular.module('ss14Team113App')
           return board;
       }
 
+      /**
+       * placeShip
+       *
+       * Determines if a dropped ships position is valid
+       * and if so places it and updates the board status
+       */
       function placeShip(dragEl, dropEl) {
           var aDragEl = angular.element(dragEl),
               aDropEl = angular.element(dropEl),
@@ -213,6 +258,11 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * rotateShip
+       *
+       * Rotates a ship if it is valid
+       */
       function rotateShip(shipId) {
           var shipEl = $('#' + shipId),
               id = shipId,
@@ -234,6 +284,11 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * validDropPosition
+       *
+       * Check that the ship will be on the board and that there aren't other ships there.
+       */
       function validDropPosition(id, row, col) {
           var length = shipStatus[id].size,
               rotated = shipStatus[id].rotated,
@@ -242,6 +297,11 @@ angular.module('ss14Team113App')
           else {return false;}
       }
 
+      /**
+       * validRotation
+       *
+       * Check that the ship will be on the board and that there aren't other ships there.
+       */
       function validRotation(shipId, row, col) {
           var id = shipId,
               length = shipStatus[id].size,
@@ -251,11 +311,21 @@ angular.module('ss14Team113App')
           else {return false;}
       }
 
+      /**
+       * onBoard
+       *
+       * Check the the ship will be on the board
+       */
       function onBoard(length, pos) {
           if(length + pos <= 10) {return true;}
           else {return false;}
       }
 
+      /**
+       * cellsEmpty
+       *
+       * Check that there are no other ships in the cells
+       */
       function cellsEmpty(length, row, col, rotated, id) {
           if(rotated) {
               for (var i = 0; i < length; i++) {
@@ -277,6 +347,11 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * setShipPosition
+       *
+       * Upon a valid drop move the ship element to the target cell
+       */
       function setShipPosition(aDragEl, dropEl) {
           var aDropEl = angular.element(dropEl);
           aDragEl.detach();
@@ -284,6 +359,11 @@ angular.module('ss14Team113App')
           aDropEl.append(aDragEl);
       }
 
+      /**
+       * setSunkShipPosition
+       *
+       * Display a sunken ship to the opponents board.
+       */
       function setSunkShipPosition(ship) {
           var shipId = '#' + ship.type + 'Opponent',
               shipEl = $(shipId),
@@ -303,6 +383,11 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * updateBoardStatus
+       *
+       * Update the board status object that a ship has been placed in certain cells
+       */
       function updateBoardStatus(id, row, col) {
           var length = shipStatus[id].size;
           if(shipStatus[id].rotated) {
@@ -317,6 +402,12 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * setBoardSize
+       *
+       * Set the scope rows and cells object to the board size
+       * so ng-repeat can create the correct board size.
+       */
       function setBoardSize(boardSize) {
         for(var i = 0; i < boardSize; i++) {
           $scope.rows.push(i);
@@ -324,6 +415,13 @@ angular.module('ss14Team113App')
         }
       }
 
+      /**
+       * getShipPosition
+       *
+       * Determine the position of a ships start cell on the board.
+       * Used to determine the position for a valid rotation and
+       * to pass a sunken ship's position to the opponent.
+       */
       function getShipPosition(id) {
           for(var i = 0; i < boardSize; i++) {
               for(var j = 0; j < boardSize; j++) {
@@ -334,6 +432,11 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * removeShip
+       *
+       * Clear the board status object of a ship when drop or rotate to a new position.
+       */
       function removeShip(id) {
           for(var i = 0; i < boardSize; i++) {
               for(var j = 0; j < boardSize; j++) {
@@ -344,6 +447,12 @@ angular.module('ss14Team113App')
           }
       }
 
+      /**
+       * placementComplete
+       *
+       * Verify that all ships have been placed when user wants to start the game.
+       * Triggered by the placement complete button.
+       */
       function placementComplete() {
           var allPlaced = true;
           // for testing
@@ -354,6 +463,9 @@ angular.module('ss14Team113App')
           return allPlaced;
       }
 
+      /**
+       * endGame
+       */
       function endGame() {
           alert('Game Over');
           $scope.gameMessage = Game.messages.VICTORY;
