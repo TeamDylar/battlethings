@@ -1,9 +1,10 @@
 'use strict';
 
 angular.module('ss14Team113App')
-  .service('Game', function Game($q, $timeout) {
+  .service('Game', function Game($q, $timeout, $rootScope) {
 
-    var dataUrl = 'https://battlethings-dev1.firebaseio.com/',
+    var Game = this,
+        dataUrl = 'https://battlethings-dev1.firebaseio.com/',
         baseRef = new Firebase(dataUrl),
         gameRoom = 'test1vstest2', // $location.query(gameroom) ?
         gameRef = baseRef.child('game/' + gameRoom),
@@ -16,14 +17,22 @@ angular.module('ss14Team113App')
         callbackName = {
             UPDATE_BOARD: 'UPDATE_BOARD'
         },
+        gameState = {
+            READY: 'READY'
+        },
+        opponentReady = false,
+        turnDeferred, // deferred returned by start that notifies of whose turn
         shotDeferred, // deferred returned by a shot that resolves to shot response data
         init = true, // boolean for initialization
-        distributed = false; // flag for Firebase (true) or local synchronous (false).;
+        distributed = true; // flag for Firebase (true) or local synchronous (false).;
 
-    // date ref for turn
-    // - starts at 0, both create a random number, if 0 place number, if > num place num (so notify other player)
-    //   larger numbers turn
+    /////////////////////////////////////
+    // Game service public properties
+    /////////////////////////////////////
 
+    /**
+     * Messages depicting possible game states
+     */
     this.messages = {
         STARTING: 'Game Starting',
         CHECKING_TURN: 'Checking Turn',
@@ -38,18 +47,85 @@ angular.module('ss14Team113App')
         SUNK: 'Ship Sunk'
     };
 
+    /**
+     * A map of possible callback types to register
+     */
     this.callbackName = callbackName;
 
+    /////////////////////////////////////
+    // Game service public functions
+    /////////////////////////////////////
+
+    /*(
+     * registerFn
+     *
+     * Use to register callback to respond to opponent shots
+     */
     this.registerFn = function(fnName, fn) {
         callbacks[fnName].push(fn);
     }
 
+    /**
+     * setTurnState
+     *
+     * Use on initialization to set turn state to 0
+     */
+    this.setTurnState = function() {
+        if(distributed) {
+            turnRef.set(0, function(error) {
+                if (error) {console.log('Data could not be saved.' + error);} 
+                else {// No callback
+                    console.log('Set turn to 0');
+                }
+            });
+        }
+    }
+
+    /**
+     * start
+     *
+     * Starts a game.
+     * Called when a player confirms their placement.
+     * Checks if opponent is ready and chooses whose turn it is if they are.
+     * Else notifies player they are waiting for opponent
+     */
     this.start = function(playerId) {
         var Game = this,
             deferred = $q.defer();
 
+        turnDeferred = deferred;
+
         if(distributed) {
             console.log('distributed');
+            console.log(opponentReady);
+            if(opponentReady) {
+                var randomNumber = Math.floor(Math.random() * 2), // 0 or 1
+                    personsTurn = randomNumber === 1 ? this.getPlayer() : this.getOpponent();
+                    turnRef.set(personsTurn, function(error) {
+                        if (error) {console.log('Data could not be saved.' + error);} 
+                        else {
+                            console.log('Set turn to: ' + personsTurn);
+                            if(personsTurn === Game.getPlayer()) {
+                                deferred.resolve(Game.messages.YOUR_TURN);
+                            }
+                            else if (personsTurn === Game.getOpponent()) {
+                                deferred.resolve(Game.messages.OPPONENTS_TURN);
+                            }
+                            else {
+                                console.log('Invalid person set during turn initialization.');
+                            }
+                        }
+                    });
+            }
+            else {
+                turnRef.set(gameState.READY, function(error) {
+                    if (error) {console.log('Data could not be saved.' + error);} 
+                    else {
+                        console.log('Set turn state to READY');
+                        deferred.notify(Game.messages.WAITING);
+                    }
+                });
+            }
         }
         else { // test or single player
             $timeout(function() {
@@ -62,6 +138,9 @@ angular.module('ss14Team113App')
         }
         return deferred.promise;
     };
+    // date ref for turn
+    // - starts at 0, both create a random number, if 0 place number, if > num place num (so notify other player)
+    //   larger numbers turn
 
     this.checkTurn = function(playerId) {
       var Game = this,
@@ -127,16 +206,53 @@ angular.module('ss14Team113App')
     };
 
     this.getPlayer = function() {
-        return 'scott';
+        if(distributed) {
+            return $rootScope.player;
+        }
+        else {
+            return 'scott';  // TODO: fix to something else
+        }
     };
 
     this.getOpponent = function() {
-        return 'dennis';
+        if(distributed) {
+            return $rootScope.opponent;
+        }
+        else {
+            return 'dennis';  // TODO: fix to something else
+        }
     };
 
+    /////////////////////////////////////
+    // Firebase response handlers
+    /////////////////////////////////////
+
     turnRef.on('value', function(snapshot) {
-        if(!init){return;}
+        var turnStatus = snapshot.val();
+        console.log(turnStatus);
+        console.log(init);
+        if(init){return;}
         if(distributed) {
+            console.log('turnStatus: ' + turnStatus);
+            console.log('game ready: ' + gameState.READY);
+
+            if(turnStatus === gameState.READY) {
+                console.log('opponent ready');
+                opponentReady = true;
+            }
+
+            else if(turnDeferred) {
+                if(turnStatus === Game.getPlayer()) {
+                    turnDeferred.resolve(Game.messages.YOUR_TURN);
+                }
+                else if(turnStatus === Game.getOpponent()) {
+                    turnDeferred.resolve(Game.messages.OPPONENTS_TURN);
+                }
+                else {
+                    turnDeferred.reject('Invalid turnStatus: ' + turnStatus);
+                }
+                turnDeferred = null;
+            }
             //angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
             //    fn.call(Game, data);
             //});
@@ -147,7 +263,7 @@ angular.module('ss14Team113App')
     });
 
     shotRef.on('value', function(snapshot) {
-        if(!init){return;}
+        if(init){return;}
         if(distributed) {
             //angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
             //    fn.call(Game, data);
@@ -159,7 +275,7 @@ angular.module('ss14Team113App')
     });
 
     responseRef.on('value', function(shotInfo) {
-        if(!init){return;}
+        if(init){return;}
         if(distributed) {
             //shotDeferred.resolve(shotInfo);
         }

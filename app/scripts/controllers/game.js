@@ -2,9 +2,14 @@
 /**
  * TODO: Make id / ship / shipId variable consistent
  * TODO: Try to separate game logic from board / move so can use in other games
+ *
+ * TODO: Pass global vars into functions when possilbe
+ * TODO: Minimize scope usage by returning values to specific functions that affect scope
+ *       intead of actually setting scope in functions.
+ * TODO: Move DOM affecting functions to directives.
  */
 angular.module('ss14Team113App')
-  .controller('GameCtrl', function ($scope, $timeout, Game) {
+  .controller('GameCtrl', function ($scope, $timeout, $rootScope, Game) {
       var boardSize = 10,
           cellSize = 40,
           status = {
@@ -27,6 +32,10 @@ angular.module('ss14Team113App')
           boardStatus = initBoard(),
           opponentBoardStatus = initBoard();
 
+      /////////////////////////////////////
+      // Scope properties
+      /////////////////////////////////////
+
       $scope.playerId = Game.getPlayer();
       $scope.opponentId = Game.getOpponent;
 
@@ -37,6 +46,10 @@ angular.module('ss14Team113App')
 
       $scope.rows = [];
       $scope.cells = [];
+
+      /////////////////////////////////////
+      // Scope functions
+      /////////////////////////////////////
 
       /**
        * $scope.dropped
@@ -110,12 +123,21 @@ angular.module('ss14Team113App')
           }
       }
 
+      /////////////////////////////////////
+      // Initialization
+      /////////////////////////////////////
+
       init();
       function init() {
           setBoardSize(boardSize);
           Game.registerFn(Game.callbackName.UPDATE_BOARD, receiveShot);
+          Game.setTurnState();
       }
 
+
+      /////////////////////////////////////
+      // Private Functions - Affecting Scope, DOM, or class variables
+      /////////////////////////////////////
 
       /**
        * receiveShot
@@ -465,5 +487,28 @@ angular.module('ss14Team113App')
           alert('Game Over');
           $scope.gameMessage = Game.messages.VICTORY;
       }
+
+      /////////////////////////////////////
+      // Private Functions - PURE
+      /////////////////////////////////////
+
+
+      /////////////////////////////////////
+      // Testing
+      /////////////////////////////////////
+
+      $scope.manualTesting = true;  // use to set player and opponent names manually
+
+      $scope.$watch('testPlayer', function() {
+          if($scope.manualTesting) {
+              $rootScope.player = $scope.testPlayer;
+          }
+      });
+
+      $scope.$watch('testOpponent', function() {
+          if($scope.manualTesting) {
+              $rootScope.opponent = $scope.testOpponent;
+          }
+      });
 
   });
