@@ -12,18 +12,20 @@ angular.module('ss14Team113App')
         shotRef = gameRef.child('shot'),
         responseRef = gameRef.child('response'),
         callbacks = {
-            UPDATE_BOARD: []
+            UPDATE_BOARD: [],
+            SWITCH_TURN: []
         },
         callbackName = {
-            UPDATE_BOARD: 'UPDATE_BOARD'
+            UPDATE_BOARD: 'UPDATE_BOARD',
+            SWITCH_TURN: 'SWITCH_TURN'
         },
         gameState = {
             READY: 'READY'
         },
+        playersTurn = false,
         opponentReady = false,
         turnDeferred, // deferred returned by start that notifies of whose turn
         shotDeferred, // deferred returned by a shot that resolves to shot response data
-        init = true, // boolean for initialization
         distributed = true; // flag for Firebase (true) or local synchronous (false).;
 
     /////////////////////////////////////
@@ -70,12 +72,24 @@ angular.module('ss14Team113App')
      *
      * Use on initialization to set turn state to 0
      */
-    this.setTurnState = function() {
+    this.setInitialState = function() {
         if(distributed) {
             turnRef.set(0, function(error) {
                 if (error) {console.log('Data could not be saved.' + error);} 
-                else {// No callback
-                    console.log('Set turn to 0');
+                else {
+                  // No callback
+                }
+            });
+            shotRef.set(0, function(error) {
+                if (error) {console.log('Data could not be saved.' + error);} 
+                else {
+                  // No callback
+                }
+            });
+            responseRef.set(0, function(error) {
+                if (error) {console.log('Data could not be saved.' + error);} 
+                else {
+                  // No callback
                 }
             });
         }
@@ -93,22 +107,20 @@ angular.module('ss14Team113App')
         var Game = this,
             deferred = $q.defer();
 
-        turnDeferred = deferred;
-
         if(distributed) {
-            console.log('distributed');
-            console.log(opponentReady);
             if(opponentReady) {
                 var randomNumber = Math.floor(Math.random() * 2), // 0 or 1
                     personsTurn = randomNumber === 1 ? this.getPlayer() : this.getOpponent();
                     turnRef.set(personsTurn, function(error) {
                         if (error) {console.log('Data could not be saved.' + error);} 
                         else {
-                            console.log('Set turn to: ' + personsTurn);
+                            console.log('Service - start: set turn to: ' + personsTurn);
                             if(personsTurn === Game.getPlayer()) {
+                                playersTurn = true;
                                 deferred.resolve(Game.messages.YOUR_TURN);
                             }
                             else if (personsTurn === Game.getOpponent()) {
+                                playersTurn = false;
                                 deferred.resolve(Game.messages.OPPONENTS_TURN);
                             }
                             else {
@@ -121,8 +133,9 @@ angular.module('ss14Team113App')
                 turnRef.set(gameState.READY, function(error) {
                     if (error) {console.log('Data could not be saved.' + error);} 
                     else {
-                        console.log('Set turn state to READY');
+                        console.log('Service - start: set turn state to WAITING');
                         deferred.notify(Game.messages.WAITING);
+                        turnDeferred = deferred;
                     }
                 });
             }
@@ -138,9 +151,27 @@ angular.module('ss14Team113App')
         }
         return deferred.promise;
     };
-    // date ref for turn
-    // - starts at 0, both create a random number, if 0 place number, if > num place num (so notify other player)
-    //   larger numbers turn
+
+    this.switchTurn = function(playerId) {
+        if(distributed) {
+            console.log('switching turns');
+            turnRef.set(playerId, function(error) {
+                if (error) {console.log('Data could not be saved.' + error);} 
+                else {
+                    // no callback
+                }
+            });
+        }
+        else { // test or single player
+            $timeout(function() {
+                deferred.notify(Game.messages.OPPONENTS_TURN);
+            }, 500);
+
+            $timeout(function() {
+                deferred.resolve(Game.messages.YOUR_TURN);
+            }, 1000);
+        }
+    }
 
     this.checkTurn = function(playerId) {
       var Game = this,
@@ -171,10 +202,13 @@ angular.module('ss14Team113App')
           shotPos = {row: row, col: col};
       shotDeferred = deferred;
       if(distributed) {
-          //shotRef.set(shotPos, function(error) {
-          //  if (error) {console.log('Data could not be saved.' + error);} 
-          //  else {// No callback}
-          //});
+          console.log('Services - fire shot - turn: ' + playersTurn);
+          shotRef.set(shotPos, function(error) {
+              if (error) {console.log('Shot data could not be saved.' + error);} 
+              else {
+                // No callback
+              }
+          });
       }
       else { // test or single player
           $timeout(function() {
@@ -195,10 +229,12 @@ angular.module('ss14Team113App')
      */
     this.respondToShot = function(shotResponse) {
         if(distributed) {
-            //responseRef.set(shotPos, function(error) {
-            //  if (error) {console.log('Data could not be saved.' + error);} 
-            //  else {// No callback}
-            //});
+            responseRef.set(shotResponse, function(error) {
+              if (error) {console.log('Data could not be saved.' + error);} 
+              else {
+                // No callback
+              }
+            });
         }
         else {
             shotDeferred.resolve(shotResponse);
@@ -227,14 +263,12 @@ angular.module('ss14Team113App')
     // Firebase response handlers
     /////////////////////////////////////
 
-    turnRef.on('value', function(snapshot) {
-        var turnStatus = snapshot.val();
-        console.log(turnStatus);
-        console.log(init);
-        if(init){return;}
+    turnRef.on('value', function(turnData) {
+        var turnStatus = turnData.val();
+
+        if(!turnStatus){return;}
+
         if(distributed) {
-            console.log('turnStatus: ' + turnStatus);
-            console.log('game ready: ' + gameState.READY);
 
             if(turnStatus === gameState.READY) {
                 console.log('opponent ready');
@@ -242,10 +276,13 @@ angular.module('ss14Team113App')
             }
 
             else if(turnDeferred) {
+                console.log('Should only see once, resolving turn deferred');
                 if(turnStatus === Game.getPlayer()) {
+                    playersTurn = true;
                     turnDeferred.resolve(Game.messages.YOUR_TURN);
                 }
                 else if(turnStatus === Game.getOpponent()) {
+                    playersTurn = false;
                     turnDeferred.resolve(Game.messages.OPPONENTS_TURN);
                 }
                 else {
@@ -253,36 +290,60 @@ angular.module('ss14Team113App')
                 }
                 turnDeferred = null;
             }
-            //angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
-            //    fn.call(Game, data);
-            //});
+            else {
+                var message;
+                console.log('Service - turnRef - turn status: ' + turnStatus);
+                if(turnStatus === Game.getPlayer()) {
+                    playersTurn = true;
+                    message = Game.messages.YOUR_TURN;
+                }
+                else if(turnStatus === Game.getOpponent()) {
+                    playersTurn = false;
+                    message = Game.messages.OPPONENTS_TURN;
+                }
+                else {
+                    message = 'Invalid turnStatus: ' + turnStatus;
+                }
+                angular.forEach(callbacks[callbackName.SWITCH_TURN], function(fn) {
+                    fn.call(Game, message);
+                });
+
+            }
         }
         else { // test or single player
             console.log("Error - shouldn't recieve shotRef.on in synchronous mode.");
         }
     });
 
-    shotRef.on('value', function(snapshot) {
-        if(init){return;}
+    shotRef.on('value', function(shotData) {
+        console.log('Service - shot ref - turn: ' + playersTurn);
+        var shotInfo = shotData.val();
+
+        if(!shotInfo || playersTurn){return;}
+        console.log('Service - shot info: ' + shotInfo);
         if(distributed) {
-            //angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
-            //    fn.call(Game, data);
-            //});
+              console.log('receiving shot');
+              angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
+                  fn.call(Game, shotInfo);
+              });
         }
         else { // test or single player
             console.log("Error - shouldn't recieve shotRef.on in synchronous mode.");
         }
     });
 
-    responseRef.on('value', function(shotInfo) {
-        if(init){return;}
+    responseRef.on('value', function(responseData) {
+        console.log('Service - response ref - turn: ' + playersTurn);
+        var shotResponse = responseData.val();
+        if(!shotResponse || !playersTurn){return;}
+
         if(distributed) {
-            //shotDeferred.resolve(shotInfo);
+            console.log('Service - response ref - firing deferred: ' + shotResponse);
+            shotDeferred.resolve(shotResponse);
         }
         else { // test or single player
             console.log("Error - shouldn't recieve responseRef.on in synchronous mode.");
         }
     });
 
-    init = false;
   });

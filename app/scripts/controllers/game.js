@@ -86,7 +86,17 @@ angular.module('ss14Team113App')
 
               Game.start($scope.playerId).then(function(message) {
                   $scope.gameMessage = message;
-                  checkTurn();
+                  console.log('Controller - start - message: ' + message)
+                  if(message === Game.messages.YOUR_TURN) {
+                      $scope.playersTurn = true;
+                  }
+                  else if(message === Game.messages.OPPONENTS_TURN) {
+                      $scope.playersTurn = false;
+                  }
+                  else {
+                      console.log('Invalid turn message: ' + message);
+                  }
+                  //checkTurn();
               },
               function(reason) {
                   $scope.gameMessage = reason;
@@ -106,13 +116,15 @@ angular.module('ss14Team113App')
       $scope.fireShot = function(row, col) {
           if($scope.playersTurn && validShot(row, col)){
               $scope.playersTurn = false;
+              console.log('Controller - fire shot - players turn: ' + $scope.playersTurn);
               Game.fireShot($scope.playerId, row, col).then(function(data) {
+                  console.log('Controller - fire shot - deferred: ' + data);
                   $scope.gameMessage = data.message;
                   updateOpponentsBoard(data);
-                  $timeout(function() {
-                      $scope.gameMessage = Game.messages.OPPONENTS_TURN;
-                  }, 500);
-                  checkTurn();
+                  //$timeout(function() {
+                  //    $scope.gameMessage = Game.messages.OPPONENTS_TURN;
+                  //}, 500);
+                  //checkTurn();
               },
               function(reason) {
                   $scope.gameMessage = reason;
@@ -131,7 +143,8 @@ angular.module('ss14Team113App')
       function init() {
           setBoardSize(boardSize);
           Game.registerFn(Game.callbackName.UPDATE_BOARD, receiveShot);
-          Game.setTurnState();
+          Game.registerFn(Game.callbackName.SWITCH_TURN, switchTurnResponse);
+          Game.setInitialState();
       }
 
 
@@ -184,13 +197,33 @@ angular.module('ss14Team113App')
           data.details.gameOver = gameOver;
           Game.respondToShot(data);
           $scope.playersTurn = true;
+          console.log('players turn1: ' + $scope.playersTurn);
           if(gameOver) {endGame();}
+      }
+
+      /**
+       * switchTurn
+       */
+      function switchTurnResponse(message) {
+          console.log('Controller - Switching turns to: ' + message);
+          $scope.gameMessage = message;
+          if(message === Game.messages.YOUR_TURN) {
+              $scope.playersTurn = true;
+          }
+          else if(message === Game.messages.OPPONENTS_TURN) {
+              $scope.playersTurn = false;
+          }
+          else {
+              console.log('Invalid switch turn message: ' + message);
+          }
+          $scope.safeApply();
       }
 
       /**
        * checkTurn
        */
       function checkTurn() {
+          console.log('not supposed to be here');
           Game.checkTurn($scope.playerId).then(function(message) {
               $scope.playersTurn = true;
               $scope.gameMessage = message;
@@ -229,6 +262,7 @@ angular.module('ss14Team113App')
           default:
             console.log('Invalid Message: ' + data.messages);
           }
+          Game.switchTurn(Game.getOpponent());
       }
 
       /**
@@ -492,6 +526,19 @@ angular.module('ss14Team113App')
       // Private Functions - PURE
       /////////////////////////////////////
 
+      /////////////////////////////////////
+      // TODO: move to utility
+      /////////////////////////////////////
+      $scope.safeApply = function(fn) {
+        var phase = this.$root.$$phase;
+        if(phase == '$apply' || phase == '$digest') {
+          if(fn && (typeof(fn) === 'function')) {
+            fn();
+          }
+        } else {
+          this.$apply(fn);
+        }
+      };
 
       /////////////////////////////////////
       // Testing
