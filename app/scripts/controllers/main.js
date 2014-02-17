@@ -3,8 +3,18 @@
 angular.module('ss14Team113App')
   .controller('MainCtrl', function ($scope, $firebase) {
     console.log('got here');
+
+    var connectedRef = new Firebase("https://battlethings-dev1.firebaseio.com/.info/connected");
+    // connectedRef.on("value", function(snap) {
+    //   if (snap.val() === true) {
+    //     alert("connected");
+    //   } else {
+    //     alert("not connected");
+    //   }
+    // });
+
+
     var playersRef = new Firebase("https://battlethings-dev1.firebaseio.com/players");
-    // evt.preventDefault();
 
     $scope.players = $firebase(playersRef);
 
@@ -73,6 +83,11 @@ angular.module('ss14Team113App')
         $scope.showPlayerDiv = false;
         $scope.showCancelRequest = true;
       }
+
+
+
+      // myPlayer.onDisconnect().myOpponent.set({ name: opponentname, status: 'Game Requested by ' + myName});
+
 
       myPlayer.onDisconnect().remove();
 

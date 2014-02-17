@@ -55,10 +55,10 @@
 
 <!-- <div ng-repeat="player in players | filter: {status: 'available'}">{{player.name}}</div> -->
 
-<div id="playersDiv" ng-show="showPlayerDiv">
+<div id="playersDiv" ng-show="showPlayerDiv" ng-model='whatevs'>
   <h3>{{user.name}}, choose Your Opponent</h3>
   <form name='myForm'>
-    <div ng-repeat="player in players">
+    <div ng-repeat="player in players" ng-hide="player.name == user.name">
       <input type='radio' name='playerline' ng-model='opponent' value='player.name' ng-change='opponentList(player.name)'> <!-- id is {{player.name}} -->
       <em>{{player.name}}</em>: {{player.status}}
     </div>
