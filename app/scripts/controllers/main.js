@@ -17,6 +17,7 @@ angular.module('ss14Team113App')
     var playersRef = new Firebase("https://battlethings-dev1.firebaseio.com/players");
 
     $scope.players = $firebase(playersRef);
+    $scope.showChooseNameDiv = true;
 
 
     function scrubName(name) {
@@ -48,15 +49,16 @@ angular.module('ss14Team113App')
         if (y === null) {
           // initialize name
           myPlayer.set({ name: $scope.user.name, status: 'available'});
-          $scope.showPlayerDiv = 'true';
-          console.log('showPlayerDiv set to ' + $scope.showPlayerDiv);
+          $scope.showChooseNameDiv = false
+          $scope.showOpponentsDiv = true;
+          console.log('showOpponentsDiv set to ' + $scope.showOpponentsDiv);
           myPlayer.on('value', function(nameSnapshot) {
             var z = nameSnapshot.val();
             //displays this player's status in 'your status' section 3
             $scope.lobbystatus = z.status;
             console.log('z = ' + z.name + ' ' + z.status);
             if ($scope.lobbystatus.match(/^game/i)) {
-              alert($scope.lobbystatus);
+              // alert($scope.lobbystatus);
               $scope.showStartGame = true;
               $scope.showCancelRequest = true;
               }
@@ -80,11 +82,16 @@ angular.module('ss14Team113App')
         var myOpponent = playersRef.child(opponentname);
         myOpponent.set({ name: opponentname, status: 'Game Requested by ' + myName});
         myPlayer.set({ name: $scope.user.name, status: 'Requesting Game with ' + opponentname});
-        $scope.showPlayerDiv = false;
+        $scope.chosenOpponent = opponentname;
+        console.log('chosenOpponent = ' + $scope.chosenOpponent);
+        $scope.showOpponentsDiv = false;
         $scope.showCancelRequest = true;
       }
 
-
+      $scope.cancelRequest = function(username, opponentname) {
+        console.log('username = ' + username);
+        console.log('$scope.chosenOpponent = ' + $scope.chosenOpponent);
+      }
 
       // myPlayer.onDisconnect().myOpponent.set({ name: opponentname, status: 'Game Requested by ' + myName});
 
