@@ -37,7 +37,7 @@ angular.module('ss14Team113App')
       /////////////////////////////////////
 
       $scope.playerId = Game.getPlayer();
-      $scope.opponentId = Game.getOpponent;
+      $scope.opponentId = Game.getOpponent();
 
       $scope.gameSetup = true;
       $scope.gameMessage = Game.messages.STARTING;
@@ -54,7 +54,7 @@ angular.module('ss14Team113App')
       /**
        * $scope.dropped
        *
-       * Triggered by upon drop portion of drag and drop.
+       * Triggered upon drop portion of a drag and drop.
        * Called if drag element is over a target element
        */
       $scope.dropped = function(dragEl, dropEl) {
@@ -78,31 +78,12 @@ angular.module('ss14Team113App')
        * Starts the game if all pieces are placed.
        */
       $scope.startGame = function() {
-          if(!placementComplete()){
-              alert('Must deploy all your animal warriors!');
-          }
+          if(!placementComplete()) {alert('Must deploy all your animal warriors!');}
           else {
               $scope.gameSetup = false;
-
-              Game.start($scope.playerId).then(function(message) {
-                  $scope.gameMessage = message;
-                  console.log('Controller - start - message: ' + message)
-                  if(message === Game.messages.YOUR_TURN) {
-                      $scope.playersTurn = true;
-                  }
-                  else if(message === Game.messages.OPPONENTS_TURN) {
-                      $scope.playersTurn = false;
-                  }
-                  else {
-                      console.log('Invalid turn message: ' + message);
-                  }
-                  //checkTurn();
-              },
-              function(reason) {
+              Game.start().then(function(message) { /* Game will start with switch turn call. */},
+              function(reason) { // reject if WAITING for opponent.
                   $scope.gameMessage = reason;
-              },
-              function(update) { // Waiting for opponent
-                  $scope.gameMessage = update;
               });
           }
       }
@@ -116,15 +97,9 @@ angular.module('ss14Team113App')
       $scope.fireShot = function(row, col) {
           if($scope.playersTurn && validShot(row, col)){
               $scope.playersTurn = false;
-              console.log('Controller - fire shot - players turn: ' + $scope.playersTurn);
               Game.fireShot($scope.playerId, row, col).then(function(data) {
-                  console.log('Controller - fire shot - deferred: ' + data);
                   $scope.gameMessage = data.message;
                   updateOpponentsBoard(data);
-                  //$timeout(function() {
-                  //    $scope.gameMessage = Game.messages.OPPONENTS_TURN;
-                  //}, 500);
-                  //checkTurn();
               },
               function(reason) {
                   $scope.gameMessage = reason;
@@ -142,7 +117,7 @@ angular.module('ss14Team113App')
       init();
       function init() {
           setBoardSize(boardSize);
-          Game.registerFn(Game.callbackName.UPDATE_BOARD, receiveShot);
+          Game.registerFn(Game.callbackName.RECEIVE_SHOT, receiveShotResponse);
           Game.registerFn(Game.callbackName.SWITCH_TURN, switchTurnResponse);
           Game.setInitialState();
       }
@@ -153,7 +128,7 @@ angular.module('ss14Team113App')
       /////////////////////////////////////
 
       /**
-       * receiveShot
+       * receiveShotResponse
        *
        * Callback passed to Game service to be called when opponent shoots.
        * Determines the results of the shot and updates the player's board.
@@ -161,7 +136,7 @@ angular.module('ss14Team113App')
        *
        * TODO: Move to Board Directive? Manipulates DOM
        */
-      function receiveShot(cell) {
+      function receiveShotResponse(cell) {
           var result = boardStatus[cell.row][cell.col],
               cellId = "playerBoard" + cell.row + cell.col,
               cellEl = $('div[custom-id="' + cellId + '"]'),
@@ -170,7 +145,8 @@ angular.module('ss14Team113App')
               data = {details: {gameOver: false, 
                                 shot: {row: cell.row, col: cell.col}, 
                                 ship: {}}, 
-                      message: ''};
+                      message: '',
+                      playerId: $scope.playerId};
           if(result !== status.empty) { // HIT
               cellEl.addClass('hit');
               shipStatus[shipId].hits = shipStatus[shipId].hits + 1;
@@ -197,15 +173,18 @@ angular.module('ss14Team113App')
           data.details.gameOver = gameOver;
           Game.respondToShot(data);
           $scope.playersTurn = true;
-          console.log('players turn1: ' + $scope.playersTurn);
           if(gameOver) {endGame();}
       }
 
       /**
-       * switchTurn
+       * switchTurnResponse
+       *
+       * Callback passed to Game service to be called when turns switch.
+       * Recieves a message of either YOUR_TURN or OPPONENTS_TURN and 
+       * sets the $scope.playersTurn variable to true or false respectively
+       * Needs $apply() since triggered by Firebase callback responseRef.on update
        */
       function switchTurnResponse(message) {
-          console.log('Controller - Switching turns to: ' + message);
           $scope.gameMessage = message;
           if(message === Game.messages.YOUR_TURN) {
               $scope.playersTurn = true;
@@ -220,28 +199,13 @@ angular.module('ss14Team113App')
       }
 
       /**
-       * checkTurn
-       */
-      function checkTurn() {
-          console.log('not supposed to be here');
-          Game.checkTurn($scope.playerId).then(function(message) {
-              $scope.playersTurn = true;
-              $scope.gameMessage = message;
-          },
-          function(reason) {
-              $scope.gameMessage = reason;
-          },
-          function(update) { // Opponent's Turn
-              $scope.gameMessage = update;
-          });
-      }
-
-      /**
        * updateOpponentsBoard
        *
        * Updates opponent's board on players screen.
        * Occurs after a player shoots and recieves the results back from the Game service
        * Recieves the data of the deferred passed back to $scope.fireShot
+       *
+       * TODO: Move to directive(BOARD) uppdate board?
        */
       function updateOpponentsBoard(data) {
           var shot = data.details.shot,
@@ -267,6 +231,8 @@ angular.module('ss14Team113App')
 
       /**
        * validShot
+       *
+       * TODO: Move to directive(BOARD) valid action?
        */
       function validShot(row, col) {
           if(opponentBoardStatus[row][col] === status.empty) {return true;}
@@ -278,6 +244,8 @@ angular.module('ss14Team113App')
        *
        * Creates the boardStatus object to hold game state
        * All status is initially set to empty.
+       *
+       * TODO: Move to directive (BOARD) 
        */ 
       function initBoard() {
           var board = [];
@@ -296,6 +264,8 @@ angular.module('ss14Team113App')
        *
        * Determines if a dropped ships position is valid
        * and if so places it and updates the board status
+       *
+       * TODO: Move to directive (BOARD) call placeItem
        */
       function placeShip(dragEl, dropEl) {
           var aDragEl = angular.element(dragEl),
@@ -315,6 +285,8 @@ angular.module('ss14Team113App')
        * rotateShip
        *
        * Rotates a ship if it is valid
+       *
+       * TODO: Move to directive (SHIP? or BOARD PIECE?)
        */
       function rotateShip(shipId) {
           var shipEl = $('#' + shipId),
@@ -338,6 +310,8 @@ angular.module('ss14Team113App')
        * validDropPosition
        *
        * Check that the ship will be on the board and that there aren't other ships there.
+       *
+       * TODO: Move to directive (BOARD)
        */
       function validDropPosition(id, row, col) {
           var length = shipStatus[id].size,
@@ -351,6 +325,8 @@ angular.module('ss14Team113App')
        * validRotation
        *
        * Check that the ship will be on the board and that there aren't other ships there.
+       *
+       * TODO: Move to directive (BOARD)
        */
       function validRotation(shipId, row, col) {
           var id = shipId,
@@ -365,6 +341,8 @@ angular.module('ss14Team113App')
        * onBoard
        *
        * Check the the ship will be on the board
+       *
+       * TODO: Move to directive (BOARD)
        */
       function onBoard(length, pos) {
           if(length + pos <= 10) {return true;}
@@ -375,6 +353,8 @@ angular.module('ss14Team113App')
        * cellsEmpty
        *
        * Check that there are no other ships in the cells
+       *
+       * TODO: Move to directive (BOARD)
        */
       function cellsEmpty(length, row, col, rotated, id) {
           if(rotated) {
@@ -414,6 +394,8 @@ angular.module('ss14Team113App')
        * setSunkShipPosition
        *
        * Display a sunken ship to the opponents board.
+       *
+       * TODO: Move to directive (CELL)
        */
       function setSunkShipPosition(ship) {
           var shipId = '#' + ship.type + 'Opponent',
@@ -438,6 +420,8 @@ angular.module('ss14Team113App')
        * updateBoardStatus
        *
        * Update the board status object that a ship has been placed in certain cells
+       *
+       * TODO: underscore
        */
       function updateBoardStatus(id, row, col) {
           var length = shipStatus[id].size;
@@ -458,6 +442,8 @@ angular.module('ss14Team113App')
        *
        * Set the scope rows and cells object to the board size
        * so ng-repeat can create the correct board size.
+       *
+       * TODO: underscore
        */
       function setBoardSize(boardSize) {
         for(var i = 0; i < boardSize; i++) {
@@ -472,6 +458,8 @@ angular.module('ss14Team113App')
        * Determine the position of a ships start cell on the board.
        * Used to determine the position for a valid rotation and
        * to pass a sunken ship's position to the opponent.
+       *
+       * TODO: underscore
        */
       function getShipPosition(id) {
           for(var i = 0; i < boardSize; i++) {
@@ -487,6 +475,8 @@ angular.module('ss14Team113App')
        * removeShip
        *
        * Clear the board status object of a ship when drop or rotate to a new position.
+       *
+       * TODO: underscore
        */
       function removeShip(id) {
           for(var i = 0; i < boardSize; i++) {
@@ -516,6 +506,8 @@ angular.module('ss14Team113App')
 
       /**
        * endGame
+       *
+       * TODO: not done
        */
       function endGame() {
           alert('Game Over');
@@ -539,7 +531,7 @@ angular.module('ss14Team113App')
           this.$apply(fn);
         }
       };
-
+/// HERE WE ARE
       /////////////////////////////////////
       // Testing
       /////////////////////////////////////
@@ -549,12 +541,14 @@ angular.module('ss14Team113App')
       $scope.$watch('testPlayer', function() {
           if($scope.manualTesting) {
               $rootScope.player = $scope.testPlayer;
+              $scope.playerId = $scope.testPlayer;
           }
       });
 
       $scope.$watch('testOpponent', function() {
           if($scope.manualTesting) {
               $rootScope.opponent = $scope.testOpponent;
+              $scope.opponentId = $scope.testOpponent
           }
       });
 

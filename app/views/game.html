@@ -26,9 +26,9 @@
         </div>
     </div>
 
-    <div class="barrier"></div>
+    <div class="barrier" ng-hide="gameSetup"></div>
 
-    <div id="opponent" class="board">
+    <div id="opponent" class="board" ng-hide="gameSetup">
         <h3 ng-bind="opponentId"></h3>
         <div class="row" ng-repeat="row in rows">
             <div id="{{'oppBoard' + $parent.$index + $index}}"

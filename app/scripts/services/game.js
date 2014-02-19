@@ -12,11 +12,11 @@ angular.module('ss14Team113App')
         shotRef = gameRef.child('shot'),
         responseRef = gameRef.child('response'),
         callbacks = {
-            UPDATE_BOARD: [],
+            RECEIVE_SHOT: [],
             SWITCH_TURN: []
         },
         callbackName = {
-            UPDATE_BOARD: 'UPDATE_BOARD',
+            RECEIVE_SHOT: 'RECEIVE_SHOT',
             SWITCH_TURN: 'SWITCH_TURN'
         },
         gameState = {
@@ -24,9 +24,8 @@ angular.module('ss14Team113App')
         },
         playersTurn = false,
         opponentReady = false,
-        turnDeferred, // deferred returned by start that notifies of whose turn
         shotDeferred, // deferred returned by a shot that resolves to shot response data
-        distributed = true; // flag for Firebase (true) or local synchronous (false).;
+        distributed = true; // flag for Firebase distributed asynch (true) or local synchronous (false).;
 
     /////////////////////////////////////
     // Game service public properties
@@ -68,29 +67,23 @@ angular.module('ss14Team113App')
     }
 
     /**
-     * setTurnState
+     * setInitialState
      *
-     * Use on initialization to set turn state to 0
+     * Called on initialization to set states to 0 for turn, shot, and response refs.
      */
     this.setInitialState = function() {
         if(distributed) {
             turnRef.set(0, function(error) {
                 if (error) {console.log('Data could not be saved.' + error);} 
-                else {
-                  // No callback
-                }
+                else {/* No callback for data set op */}
             });
             shotRef.set(0, function(error) {
                 if (error) {console.log('Data could not be saved.' + error);} 
-                else {
-                  // No callback
-                }
+                else {/* No callback for data set op */}
             });
             responseRef.set(0, function(error) {
                 if (error) {console.log('Data could not be saved.' + error);} 
-                else {
-                  // No callback
-                }
+                else {/* No callback for data set op */}
             });
         }
     }
@@ -103,117 +96,94 @@ angular.module('ss14Team113App')
      * Checks if opponent is ready and chooses whose turn it is if they are.
      * Else notifies player they are waiting for opponent
      */
-    this.start = function(playerId) {
+    this.start = function() {
         var Game = this,
-            deferred = $q.defer();
-
+            deferred = $q.defer(),
+            randomNumber = Math.floor(Math.random() * 2), // 0 or 1
+            personsTurn = randomNumber === 1 ? this.getPlayer() : this.getOpponent();
         if(distributed) {
             if(opponentReady) {
-                var randomNumber = Math.floor(Math.random() * 2), // 0 or 1
-                    personsTurn = randomNumber === 1 ? this.getPlayer() : this.getOpponent();
-                    turnRef.set(personsTurn, function(error) {
-                        if (error) {console.log('Data could not be saved.' + error);} 
-                        else {
-                            console.log('Service - start: set turn to: ' + personsTurn);
-                            if(personsTurn === Game.getPlayer()) {
-                                playersTurn = true;
-                                deferred.resolve(Game.messages.YOUR_TURN);
-                            }
-                            else if (personsTurn === Game.getOpponent()) {
-                                playersTurn = false;
-                                deferred.resolve(Game.messages.OPPONENTS_TURN);
-                            }
-                            else {
-                                console.log('Invalid person set during turn initialization.');
-                            }
-                        }
-                    });
+                turnRef.set(personsTurn, function(error) {
+                    if (error) {console.log('Data could not be saved.' + error);} 
+                    else {deferred.resolve(Game.messages.STARTING);}
+                });
             }
             else {
                 turnRef.set(gameState.READY, function(error) {
                     if (error) {console.log('Data could not be saved.' + error);} 
-                    else {
-                        console.log('Service - start: set turn state to WAITING');
-                        deferred.notify(Game.messages.WAITING);
-                        turnDeferred = deferred;
-                    }
+                    else {deferred.reject(Game.messages.WAITING);}
                 });
             }
         }
         else { // test or single player
+            deferred.resolve(Game.messages.STARTING);
             $timeout(function() {
-                deferred.notify(Game.messages.WAITING);
-            }, 500);
-
-            $timeout(function() {
-                deferred.resolve(Game.messages.STARTING);
+                angular.forEach(callbacks[callbackName.SWITCH_TURN], function(fn) {
+                    // later can make random start chance with opponent
+                    fn.call(Game, Game.messages.YOUR_TURN);
+                });
             }, 1000);
         }
         return deferred.promise;
     };
 
+    /**
+     * switchTurn
+     *
+     * Switch the turn to player whose ID is passed in.
+     * Sets the turnRef to the playerId, triggering the turnRef response handler
+     * which calls the SWITCH_TURN callback to notify players
+     */
     this.switchTurn = function(playerId) {
         if(distributed) {
-            console.log('switching turns');
             turnRef.set(playerId, function(error) {
                 if (error) {console.log('Data could not be saved.' + error);} 
-                else {
-                    // no callback
-                }
+                else {/* no callback on good data set op */}
             });
         }
         else { // test or single player
             $timeout(function() {
-                deferred.notify(Game.messages.OPPONENTS_TURN);
+                angular.forEach(callbacks[callbackName.SWITCH_TURN], function(fn) {
+                    // later can make random start chance with opponent
+                    fn.call(Game, Game.messages.OPPONENTS_TURN);
+                });
             }, 500);
 
             $timeout(function() {
-                deferred.resolve(Game.messages.YOUR_TURN);
+                angular.forEach(callbacks[callbackName.SWITCH_TURN], function(fn) {
+                    // later can make random start chance with opponent
+                    fn.call(Game, Game.messages.YOUR_TURN);
+                });
             }, 1000);
         }
     }
 
-    this.checkTurn = function(playerId) {
-      var Game = this,
-          deferred = $q.defer();
-
-      if(distributed) {
-          console.log('distributed');
-          //shotRef.set(shotPos, function(error) {
-          //  if (error) {console.log('Data could not be saved.' + error);} 
-          //  else {// No callback}
-          //});
-      }
-      else { // test or single player
-          $timeout(function() {
-              deferred.notify(Game.messages.OPPONENTS_TURN);
-          }, 500);
-
-          $timeout(function() {
-              deferred.resolve(Game.messages.YOUR_TURN);
-          }, 1000);
-      }
-      return deferred.promise;
-    };
-
+    /**
+     * fireShot
+     *
+     * Called by player to fire a shot at an opponent's board.
+     * Parameters are the row and col of the shot.
+     * Returns a deferred that resolves to the results of the shot.
+     * responseRef.on fires shotDeferred
+     * See respondToShot for response data format of defered.
+     * Player is included to force new data into Firebase for the case where
+     * shot was the same row and col and thus didn't updatate
+     */
     this.fireShot = function(playerId, row, col) {
       var Game = this,
           deferred = $q.defer(),
-          shotPos = {row: row, col: col};
+          shotPos = {playerId: playerId, row: row, col: col};
       shotDeferred = deferred;
       if(distributed) {
-          console.log('Services - fire shot - turn: ' + playersTurn);
           shotRef.set(shotPos, function(error) {
               if (error) {console.log('Shot data could not be saved.' + error);} 
-              else {
-                // No callback
-              }
+              else {/* no callback on good data set op */}
           });
       }
       else { // test or single player
           $timeout(function() {
               var data = {row: row, col: col};
-              angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
+              angular.forEach(callbacks[callbackName.RECEIVE_SHOT], function(fn) {
                   fn.call(Game, data);
               });
 
@@ -226,14 +196,22 @@ angular.module('ss14Team113App')
      * respondToShot
      *
      * Send shot response information back to the opponent.
+     *
+     * @params object shotResponse
+     *
+     * data format:
+     *    { data: { messages: Game.messages},
+     *            { gameOver: bool }
+     *            { details: 
+     *                  ship: {startCell: {row, col}, type: shipId, rotated: bool},
+     *            }
+     *    }
      */
     this.respondToShot = function(shotResponse) {
         if(distributed) {
             responseRef.set(shotResponse, function(error) {
-              if (error) {console.log('Data could not be saved.' + error);} 
-              else {
-                // No callback
-              }
+                if (error) {console.log('Data could not be saved.' + error);} 
+                else {/* no callback on good data set op */}
             });
         }
         else {
@@ -241,109 +219,95 @@ angular.module('ss14Team113App')
         }
     };
 
+    /**
+     * getPlayer
+     *
+     * Retrieves players name from rootScope
+     */
     this.getPlayer = function() {
-        if(distributed) {
-            return $rootScope.player;
-        }
-        else {
-            return 'scott';  // TODO: fix to something else
-        }
+        if(distributed) {return $rootScope.player;}
+        else {return 'scott';} // TODO: remove when able
     };
 
+    /**
+     * getOpponent
+     *
+     * Retrieves opponents name from rootScope
+     */
     this.getOpponent = function() {
-        if(distributed) {
-            return $rootScope.opponent;
-        }
-        else {
-            return 'dennis';  // TODO: fix to something else
-        }
+        if(distributed) {return $rootScope.opponent;}
+        else {return 'dennis';} // TODO: remove when able
     };
 
     /////////////////////////////////////
     // Firebase response handlers
     /////////////////////////////////////
 
+    /**
+     * turnRef.on
+     *
+     * recieves either a READY value or a players name
+     * If the game is starting and the opponent isn't ready, a READY value is passed,
+     * indicating that one player is now ready.
+     * Otherwise a name is passed, the name is for the player whose turn it is 
+     * This calls the registered SWITCH_TURN callback passing either YOUR_TURN or OPPONENTS_TURN
+     *
+     * Note: Distributed mode only
+     */
     turnRef.on('value', function(turnData) {
         var turnStatus = turnData.val();
-
         if(!turnStatus){return;}
-
-        if(distributed) {
-
-            if(turnStatus === gameState.READY) {
-                console.log('opponent ready');
-                opponentReady = true;
+        if(turnStatus === gameState.READY) {
+            opponentReady = true;
+        }
+        else { // Opponent is ready so start the game.
+            var message;
+            if(turnStatus === Game.getPlayer()) {
+                playersTurn = true;
+                message = Game.messages.YOUR_TURN;
             }
-
-            else if(turnDeferred) {
-                console.log('Should only see once, resolving turn deferred');
-                if(turnStatus === Game.getPlayer()) {
-                    playersTurn = true;
-                    turnDeferred.resolve(Game.messages.YOUR_TURN);
-                }
-                else if(turnStatus === Game.getOpponent()) {
-                    playersTurn = false;
-                    turnDeferred.resolve(Game.messages.OPPONENTS_TURN);
-                }
-                else {
-                    turnDeferred.reject('Invalid turnStatus: ' + turnStatus);
-                }
-                turnDeferred = null;
+            else if(turnStatus === Game.getOpponent()) {
+                playersTurn = false;
+                message = Game.messages.OPPONENTS_TURN;
             }
             else {
-                var message;
-                console.log('Service - turnRef - turn status: ' + turnStatus);
-                if(turnStatus === Game.getPlayer()) {
-                    playersTurn = true;
-                    message = Game.messages.YOUR_TURN;
-                }
-                else if(turnStatus === Game.getOpponent()) {
-                    playersTurn = false;
-                    message = Game.messages.OPPONENTS_TURN;
-                }
-                else {
-                    message = 'Invalid turnStatus: ' + turnStatus;
-                }
-                angular.forEach(callbacks[callbackName.SWITCH_TURN], function(fn) {
-                    fn.call(Game, message);
-                });
-
+                message = 'Invalid turnStatus: ' + turnStatus;
             }
-        }
-        else { // test or single player
-            console.log("Error - shouldn't recieve shotRef.on in synchronous mode.");
+            angular.forEach(callbacks[callbackName.SWITCH_TURN], function(fn) {
+                fn.call(Game, message);
+            });
         }
     });
 
+    /**
+     * shotRef.on
+     *
+     * Recieve info about a shot (only if it is the opponents turn)
+     * So this is for when the player is being shot by the opponent.
+     * This calls the registered RECEIVE_SHOT callback passing shotInfo: {row: row, col: col}
+     *
+     * Note: Distributed mode only
+     */
     shotRef.on('value', function(shotData) {
-        console.log('Service - shot ref - turn: ' + playersTurn);
         var shotInfo = shotData.val();
-
         if(!shotInfo || playersTurn){return;}
-        console.log('Service - shot info: ' + shotInfo);
-        if(distributed) {
-              console.log('receiving shot');
-              angular.forEach(callbacks[callbackName.UPDATE_BOARD], function(fn) {
-                  fn.call(Game, shotInfo);
-              });
-        }
-        else { // test or single player
-            console.log("Error - shouldn't recieve shotRef.on in synchronous mode.");
-        }
+        angular.forEach(callbacks[callbackName.RECEIVE_SHOT], function(fn) {
+            fn.call(Game, shotInfo);
+        });
     });
 
+    /**
+     * responseRef.on
+     *
+     * Recieve info about the results of a shot (only if it is the players turn)
+     * So this is for when the player shoots and needs the results of the shot.
+     *
+     * Note: Distributed mode only
+     */
     responseRef.on('value', function(responseData) {
-        console.log('Service - response ref - turn: ' + playersTurn);
         var shotResponse = responseData.val();
         if(!shotResponse || !playersTurn){return;}
-
-        if(distributed) {
-            console.log('Service - response ref - firing deferred: ' + shotResponse);
-            shotDeferred.resolve(shotResponse);
-        }
-        else { // test or single player
-            console.log("Error - shouldn't recieve responseRef.on in synchronous mode.");
-        }
+        shotDeferred.resolve(shotResponse);
     });
 
   });
