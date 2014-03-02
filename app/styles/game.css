@@ -1,19 +1,40 @@
+/* yellow: #fac342 */
+/* dark green: #015943 */
+/* marron: #ab166c */
+
+body {
+    background: url('../images/jungle-background.gif');
+    background-repeat: no-repeat;
+    background-position:center;
+    background-color: #015943;
+}
+
+h1, h3 {
+    color: #015943;
+    text-shadow: 3px 3px 3px #eeeeee;
+}
+
+button {
+    background-color: #015943;
+    color: #eeeeee;
+    border: 2px outset #eeeeee;
+}
+
 .container {
-  width: 1400px !important;
-  max-width: 1400px !important;
+  width: 1252px !important;
+  max-width: 1252px !important;
   text-align: center;
 }
 
 @media (min-width: 1px) {
   .container {
-    width: 1400px !important;
-    max-width: 1400px !important;
+    width: 1252px !important;
+    max-width: 1252px !important;
   }
 }
 
 #game-page {
-    width: 1370px;
-    margin-top: 50px;
+    width: 1252px;
 }
 
 .setup-container {
@@ -27,21 +48,22 @@
 .ship-container {
   height: 240px;
   width: 220px;
-  border: 1px solid black;
+  border: 1px solid #015943;
   text-align: center;
+  background: rgb(159, 171, 18);
 }
 
 .ship {
   position: relative;
   z-index: 10;
-  height: 36px;
+  height: 38px;
   background-repeat:no-repeat;
   margin: 10px;
 }
 
 .sunk-ship {
-  height: 36px;
-  background-color: red;
+  height: 38px;
+  background-color: #cc3118;
   background-repeat: no-repeat;
   margin: 10px;
 }
@@ -114,44 +136,46 @@
   display: inline-block;
   height: 380px;
   width: 10px;
-  background-color: black;
+  background-color: #015943;
 }
 
 .cell {
   height: 40px;
   width: 40px;
-  border: 1px solid black;
+  border: 1px solid #015943;
   display: inline-block;
   text-align: center;
   font-size: 25px;
+  background: rgb(159, 171, 18);
 }
 
 .lvl-over {
   /* applied to a drop target when a draggable object is over it */
-  border: 1px dashed red !important;
+  border: 1px dashed #cc3118 !important;
 }
 
 .targetCell:hover {
     cursor: pointer;
-    background-color: yellow;
+    background-color: #c7d57e;
 }
 
 .hit {
-    background-color: red;
+    background-color: #cc3118;
 }
 
 .hit:hover {
-    background-color: red;
+    background-color: #cc3118;
 }
 
 .miss {
-    background-color: blue;
+    background-color: #fac342;
 }
 
 .miss:hover {
-    background-color: blue;
+    background-color: #fac342;
 }
 
 .messages {
-  color: blue;
+  color: #015943;
+  text-shadow: 3px 3px 3px #eeeeee;
 }

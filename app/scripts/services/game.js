@@ -25,7 +25,7 @@ angular.module('ss14Team113App')
         playersTurn = false,
         opponentReady = false,
         shotDeferred, // deferred returned by a shot that resolves to shot response data
-        distributed = true; // flag for Firebase distributed asynch (true) or local synchronous (false).;
+        distributed = false; // flag for Firebase distributed asynch (true) or local synchronous (false).;
 
     /////////////////////////////////////
     // Game service public properties

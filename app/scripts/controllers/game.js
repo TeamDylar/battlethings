@@ -386,7 +386,7 @@ angular.module('ss14Team113App')
       function setShipPosition(aDragEl, dropEl) {
           var aDropEl = angular.element(dropEl);
           aDragEl.detach();
-          aDragEl.css({marginTop: -33, marginLeft: 4});
+          aDragEl.css({marginTop: -35, marginLeft: 4});
           aDropEl.append(aDragEl);
       }
 
@@ -410,7 +410,7 @@ angular.module('ss14Team113App')
               shipEl.css({position: 'absolute', top: top, left: left, display: 'block', transform: 'rotate(90deg)'});
           }
           else { // not rotated
-              var top = pos.top - 7,
+              var top = pos.top - 9,
                   left = pos.left - 5;
               shipEl.css({position: 'absolute', top: top, left: left, display: 'block'});
           }
