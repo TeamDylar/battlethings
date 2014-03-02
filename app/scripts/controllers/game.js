@@ -386,7 +386,7 @@ angular.module('ss14Team113App')
       function setShipPosition(aDragEl, dropEl) {
           var aDropEl = angular.element(dropEl);
           aDragEl.detach();
-          aDragEl.css({marginTop: -35, marginLeft: 4});
+          aDragEl.css({marginTop: -35, marginLeft: 0});
           aDropEl.append(aDragEl);
       }
 
